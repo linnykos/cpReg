@@ -26,9 +26,10 @@ stationary_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.
     est <- .extract_lambdas(res_list, lambda)
   }
 
-  obj_val <- .objective_func(nu, A, dat, transform_dat)
-  stopifnot(nrow(A) == nrow(dat), ncol(A) == ncol(transform_dat))
-  structure(list(obj_val = obj_val, nu = est$nu, A = est$A), class = "cp_ar1")
+  obj_val <- .objective_func(est$nu, est$A, dat, transform_dat)
+  stopifnot(nrow(est$A) == nrow(dat), ncol(est$A) == ncol(transform_dat),
+            length(est$nu) == ncol(dat))
+  structure(list(lambda = est$lambda, obj_val = obj_val, nu = est$nu, A = est$A), class = "cp_ar1")
 }
 
 generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
