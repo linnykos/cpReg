@@ -6,7 +6,7 @@
   })
 
   stopifnot(length(unique(sapply(res, length))) == 1)
-  res <- do.call(cbind, res)
+  res <- do.call(rbind, res)
 
   nu <- res[,1]
   A <- res[,-1]
