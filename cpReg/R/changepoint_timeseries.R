@@ -1,7 +1,7 @@
 # Poisson time series, penality is L_{1,1}
-cp_ar1 <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
-                   basis_function = construct_AR_basis,
-                   verbose = F, ...){
+cp_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
+                  basis_function = construct_AR_basis,
+                  verbose = F, ...){
 
   stopifnot(is.matrix(dat), nrow(dat) > 1)
   stopifnot(all(dat >= 0), all(dat %% 1 == 0))
