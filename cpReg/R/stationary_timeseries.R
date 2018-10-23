@@ -1,5 +1,5 @@
 # Poisson time series, penality is L_{1,1}
-cp_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
+stationary_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
                   basis_function = construct_AR_basis,
                   verbose = F, ...){
 
@@ -30,6 +30,30 @@ cp_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), la
   structure(list(nu = est$nu, A = est$A), class = "cp_ar1")
 }
 
+generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
+                             basis_function = construct_AR_basis,
+                             warning_val = 1000, ...){
+  stopifnot(nrow(A) == length(nu))
+
+  M <- length(nu); MK <- ncol(A); TT <- timesteps
+  dat <- matrix(0, ncol = M, nrow = TT)
+
+  for(time in 1:TT){
+    obs_vec <- sapply(1:M, function(i){
+      vec <- construct_AR_basis(dat[which(1:TT < time),,drop = F], thres_u = thres_u, ...)
+      vec <- vec[nrow(vec),]
+      if(!is.na(warning_val) & as.numeric(nu[i] + A[i,] %*% vec) > log(warning_val)){
+        stop(paste0("Natural parameters are exploding, with values above log of ", warning_val))
+      }
+      stats::rpois(1, lambda = exp(as.numeric(nu[i] + A[i,] %*% vec)))
+    })
+
+    dat[time,] <- obs_vec
+  }
+
+  dat
+}
+
 ########
 
 .objective_func <- function(nu, A, dat, transform_dat, lambda){
@@ -44,9 +68,9 @@ cp_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), la
   stopifnot(nrow(dat) == nrow(transform_dat), nrow(A) == ncol(dat),
             ncol(A) == ncol(transform_dat))
   TT <- nrow(dat)
-  intercept_mat <- sapply(1:TT, function(x){nu})
+  intercept_mat <- t(sapply(1:TT, function(x){nu}))
 
-  sum(exp(intercept_mat+ A%*%t(transform_dat))) - sum(dat*(intercept_mat + A%*%t(transfrom_dat)))
+  sum(exp(intercept_mat+ transform_dat%*%t(A))) - sum(dat*(intercept_mat + transform_dat%*%t(A)))
 }
 
 # for each dimension
