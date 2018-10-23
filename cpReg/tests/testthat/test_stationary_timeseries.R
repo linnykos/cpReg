@@ -279,3 +279,43 @@ test_that(".rowwise_glmnet works", {
   expect_true("glmnet" %in% class(res2))
   expect_true(nrow(res2$beta) == 5)
 })
+
+#############################
+
+## stationary_ar is correct
+
+test_that("stationary_ar works", {
+  set.seed(10)
+  M <- 5; TT <- 100
+  nu <- 0.1*runif(M)
+  A <- 0.1*matrix(runif(M*M), M, M)
+
+  dat <- generative_model(nu, A, TT, lag = 1)
+
+  res <- stationary_ar(dat, lambda = 0.05, lag = 1, verbose = F)
+
+  expect_true(is.list(res))
+  expect_true(all(names(res) == c("lambda", "obj_val", "nu", "A")))
+  expect_true(length(res$lambda) == 1)
+  expect_true(length(res$obj_val) == 1)
+  expect_true(length(res$nu) == M)
+  expect_true(all(dim(res$nu) == c(M,M)))
+})
+
+test_that("stationary_ar works for unknown lambda", {
+  set.seed(10)
+  M <- 5; TT <- 100
+  nu <- 0.1*runif(M)
+  A <- 0.1*matrix(runif(M*M), M, M)
+
+  dat <- generative_model(nu, A, TT, lag = 1)
+
+  res <- stationary_ar(dat, lag = 1, verbose = F)
+
+  expect_true(is.list(res))
+  expect_true(all(names(res) == c("lambda", "obj_val", "nu", "A")))
+  expect_true(length(res$lambda) == 1)
+  expect_true(length(res$obj_val) == 1)
+  expect_true(length(res$nu) == M)
+  expect_true(all(dim(res$nu) == c(M,M)))
+})

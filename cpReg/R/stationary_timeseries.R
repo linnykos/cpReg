@@ -20,14 +20,14 @@ stationary_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.
 
   # if lambda is NA, combine the results together
   if(is.na(lambda)) {
-    print("Starting to combine across different lambdas")
+    if(verbose) print("Starting to combine across different lambdas")
     est <- .combine_lambdas(res_list, dat, transform_dat, verbose = verbose)
   } else {
     est <- .extract_lambdas(res_list, lambda)
   }
 
-  obj_val <- .objective_func(est$nu, est$A, dat, transform_dat)
-  stopifnot(nrow(est$A) == nrow(dat), ncol(est$A) == ncol(transform_dat),
+  obj_val <- .objective_func(est$nu, est$A, dat, transform_dat, lambda = est$lambda)
+  stopifnot(nrow(est$A) == ncol(dat), ncol(est$A) == ncol(transform_dat),
             length(est$nu) == ncol(dat))
   structure(list(lambda = est$lambda, obj_val = obj_val, nu = est$nu, A = est$A), class = "cp_ar1")
 }
