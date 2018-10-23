@@ -15,6 +15,7 @@
 #' @param lambda Tuning parameter for the regression problem, allowed to be \code{NA}
 #' @param basis_function The function to generate the variables to regress onto, which
 #' can possibly take addition inputs
+#' @param intercept Boolean to allow for estimating intercepts
 #' @param verbose Boolean
 #' @param ... Addition parameters for the basis function
 #'
@@ -23,7 +24,7 @@
 #' the estimated transition matrix (\code{A}).
 #' @export
 stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
-                  basis_function = construct_AR_basis,
+                  basis_function = construct_AR_basis, intercept = T,
                   verbose = F, ...){
 
   stopifnot(is.matrix(dat), nrow(dat) > 1)
@@ -35,15 +36,15 @@ stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pro
   stopifnot(nrow(dat) == nrow(transform_dat), is.matrix(transform_dat))
 
   # perform row-wise glmnets
-  if(verbose) print("Starting to estimate coefficients row-wise: ")
+  if(verbose) cat("\nStarting to estimate coefficients row-wise: ")
   res_list <- lapply(1:M, function(x){
     if(M > 10 && x %% floor(M/10) == 0) cat('*')
-    .rowwise_glmnet(dat[,x], transform_dat, is.na(lambda))
+    .rowwise_glmnet(dat[,x], transform_dat, is.na(lambda), intercept =  intercept)
   })
 
   # if lambda is NA, combine the results together
   if(is.na(lambda)) {
-    if(verbose) print("Starting to combine across different lambdas")
+    if(verbose) cat("\nStarting to combine across different lambdas")
     est <- .combine_lambdas(res_list, dat, transform_dat, verbose = verbose)
   } else {
     est <- .extract_lambdas(res_list, lambda)
@@ -55,6 +56,26 @@ stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pro
   structure(list(lambda = est$lambda, obj_val = obj_val, nu = est$nu, A = est$A), class = "cp_ar1")
 }
 
+#' Generate a dataset from a true model
+#'
+#' Samples from the model in (2.1), (2.2) with saturation in (2.6) in
+#' https://arxiv.org/pdf/1802.04838.pdf. The
+#' construction of the basis can be passed in as a function.
+#'
+#' @param nu Vector in intercepts, one for each variable
+#' @param A Square transition matrix
+#' @param timesteps Number of time steps to proceed forward with
+#' @param thres_u A positive threshold for the saturation effect
+#' @param basis_function The function to generate the variables to regress onto, which
+#' can possibly take addition inputs
+#' @param warning_val If not \code{NA}, the code will stop if any of the
+#' parameters of the Poisson exceed this number. The default is set to 1000.
+#' @param ... Addition parameters for the basis function
+#'
+#' @return A matrix that has \code{timesteps} rows and \code{ncol(A)} columns
+#' of non-negative integers
+#' @export
+#'
 generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
                              basis_function = construct_AR_basis,
                              warning_val = 1000, ...){
@@ -67,10 +88,12 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
     obs_vec <- sapply(1:M, function(i){
       vec <- construct_AR_basis(dat[which(1:TT < time),,drop = F], thres_u = thres_u, ...)
       vec <- vec[nrow(vec),]
-      if(!is.na(warning_val) & as.numeric(nu[i] + A[i,] %*% vec) > log(warning_val)){
+      natural_param <- as.numeric(nu[i] + A[i,] %*% vec)
+
+      if(!is.na(warning_val) & as.numeric(natural_param) > log(warning_val)){
         stop(paste0("Natural parameters are exploding, with values above log of ", warning_val))
       }
-      stats::rpois(1, lambda = exp(as.numeric(nu[i] + A[i,] %*% vec)))
+      stats::rpois(1, lambda = exp(natural_param))
     })
 
     dat[time,] <- obs_vec
@@ -107,16 +130,17 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
 }
 
 # see https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#poi
-.rowwise_glmnet <- function(response, covariates, cv = TRUE){
+.rowwise_glmnet <- function(response, covariates, cv = TRUE, intercept = TRUE){
   stopifnot(length(response) == nrow(covariates))
   TT <- length(response)
 
   if(cv){
     if(TT < 30) stop("Not enough observations to perform cross validation")
     glmnet::cv.glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1,
-                      nfolds = min(max(floor(TT/10), 3), 10))
+                      nfolds = min(max(floor(TT/10), 3), 10), intercept = intercept)
 
   } else {
-    glmnet::glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1)
+    glmnet::glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1,
+                   intercept = intercept)
   }
 }

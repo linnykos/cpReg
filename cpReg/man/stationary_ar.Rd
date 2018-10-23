@@ -6,7 +6,7 @@
 \usage{
 stationary_ar(dat, thres_u = round(stats::quantile(dat[dat > 0], probs =
   0.75)), lambda = NA, basis_function = construct_AR_basis,
-  verbose = F, ...)
+  intercept = T, verbose = F, ...)
 }
 \arguments{
 \item{dat}{Count data, where each row represents a different time step and each
@@ -18,6 +18,8 @@ column represents a different variable}
 
 \item{basis_function}{The function to generate the variables to regress onto, which
 can possibly take addition inputs}
+
+\item{intercept}{Boolean to allow for estimating intercepts}
 
 \item{verbose}{Boolean}
 

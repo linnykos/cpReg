@@ -19,12 +19,12 @@
   stopifnot(all(sapply(res_list, function(x){"fishnet" %in% class(x$glmnet.fit)})))
 
   # form the sequence of lambdas first
-  if(verbose) paste0("Forming sequence of lambdas")
+  if(verbose) cat(paste0("\nForming sequence of lambdas"))
   lambda_min <- sapply(res_list, function(x){x$lambda.1se})
   lambda_all <- sort(unique(c(lambda_min)))
 
   # form many estimates of A
-  if(verbose) paste0("Forming and evaluating many estimates of A: ")
+  if(verbose) cat(paste0("\nForming and evaluating many estimates of A: "))
   d <- length(res_list)
   len <- length(lambda_all)
   obj_min <- Inf
