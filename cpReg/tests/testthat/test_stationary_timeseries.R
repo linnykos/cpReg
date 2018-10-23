@@ -75,8 +75,8 @@ test_that(".nll is roughly minimized under the ground truth",{
   A <- 0.1*matrix(runif(M*M), M, M)
 
   dat <- generative_model(nu, A, TT, lag = 1)
-
   transform_dat <- construct_AR_basis(dat, lag = 1)
+
   res <- .nll(nu, A, dat, transform_dat)
 
   trials <- 100
@@ -87,6 +87,48 @@ test_that(".nll is roughly minimized under the ground truth",{
     res2 <- .nll(nu_new, A_new, dat, transform_dat)
 
     res < res2
+  })
+
+  expect_true(all(bool_vec))
+})
+
+#######################
+
+## .nll_row is correct
+
+test_that(".nll_row works", {
+  set.seed(10)
+  M <- 5; TT <- 100
+  nu <- 0.1*runif(5)
+  A <- 0.1*matrix(runif(M*M), M, M)
+
+  dat <- generative_model(nu, A, TT, lag = 1)
+  transform_dat <- construct_AR_basis(dat, lag = 1)
+
+  res <- .nll_row(nu[1], A[1,], dat[,1], transform_dat)
+
+  expect_true(length(res) == 1)
+  expect_true(is.numeric(res))
+  expect_true(!is.matrix(res))
+})
+
+test_that(".nll_row sums to .nll", {
+  trials <- 100
+
+  bool_vec <- sapply(1:trials, function(x){
+    M <- 5; TT <- 10
+    nu <- 0.1*runif(5)
+    A <- 0.1*matrix(runif(M*M), M, M)
+
+    dat <- generative_model(nu, A, TT, lag = 1)
+    transform_dat <- construct_AR_basis(dat, lag = 1)
+
+    res <- sum(sapply(1:M, function(x){
+      .nll_row(nu[x], A[x,], dat[,x], transform_dat)
+    }))
+    res2 <- .nll(nu, A, dat, transform_dat)
+
+    abs(res - res2) <= 1e-6
   })
 
   expect_true(all(bool_vec))

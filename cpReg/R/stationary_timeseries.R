@@ -75,7 +75,7 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
 
 # for each dimension
 .nll_row <- function(nu_val, A_vec, dat_vec, transform_dat){
-  sum(exp(nu_val + A_vec %*% t(transform_dat_vec))) - sum(dat_vec * (nu_val + A_vec %*% t(transform_dat_vec)))
+  sum(exp(nu_val + A_vec %*% t(transform_dat))) - sum(dat_vec * (nu_val + A_vec %*% t(transform_dat)))
 }
 
 # see https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#poi
