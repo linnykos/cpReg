@@ -68,14 +68,17 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
   stopifnot(nrow(dat) == nrow(transform_dat), nrow(A) == ncol(dat),
             ncol(A) == ncol(transform_dat))
   TT <- nrow(dat)
-  intercept_mat <- t(sapply(1:TT, function(x){nu}))
+  intercept_mat <- t(sapply(1:(TT-1), function(x){nu}))
 
-  sum(exp(intercept_mat+ transform_dat%*%t(A))) - sum(dat*(intercept_mat + transform_dat%*%t(A)))
+  sum(exp(intercept_mat+ transform_dat[1:(TT-1),]%*%t(A))) - sum(dat[2:TT,] *(intercept_mat + transform_dat[1:(TT-1),]%*%t(A)))
 }
 
 # for each dimension
 .nll_row <- function(nu_val, A_vec, dat_vec, transform_dat){
-  sum(exp(nu_val + A_vec %*% t(transform_dat))) - sum(dat_vec * (nu_val + A_vec %*% t(transform_dat)))
+  stopifnot(length(dat_vec) == nrow(transform_dat))
+  TT <- length(dat_vec)
+
+  sum(exp(nu_val + A_vec %*% t(transform_dat[1:(TT-1),]))) - sum(dat_vec[2:TT] * (nu_val + A_vec %*% t(transform_dat[1:(TT-1),])))
 }
 
 # see https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#poi
