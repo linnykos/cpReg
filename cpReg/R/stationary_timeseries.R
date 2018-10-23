@@ -1,11 +1,34 @@
-# Poisson time series, penality is L_{1,1}
-stationary_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
+#' Poisson time series, penality is L_{1,1}
+#'
+#' Solves the optimization problem (2.8) on https://arxiv.org/pdf/1802.04838.pdf.
+#' The penalty is fixed to be the L_{1,1} (sum of absolute value), but the
+#' construction of the basis can be passed in as a function.
+#'
+#' The implementation of the function fits \code{ncol(dat)} Lasso fits under
+#' the Poisson model and concatenates the solutions together.
+#' If lambda is not set, then a heurstical way to concetenate solutions via
+#' cross-validation is used.
+#'
+#' @param dat Count data, where each row represents a different time step and each
+#' column represents a different variable
+#' @param thres_u A positive threshold for the saturation effect
+#' @param lambda Tuning parameter for the regression problem, allowed to be \code{NA}
+#' @param basis_function The function to generate the variables to regress onto, which
+#' can possibly take addition inputs
+#' @param verbose Boolean
+#' @param ... Addition parameters for the basis function
+#'
+#' @return A list containing the final-used \code{lambda} value, the final
+#' objective value (\code{obj_val}), the estimated intercepts (\code{nu}) and
+#' the estimated transition matrix (\code{A}).
+#' @export
+stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
                   basis_function = construct_AR_basis,
                   verbose = F, ...){
 
   stopifnot(is.matrix(dat), nrow(dat) > 1)
   stopifnot(all(dat >= 0), all(dat %% 1 == 0))
-  stopifnot(any(dat < thres_u))
+  stopifnot(any(dat < thres_u), thres_u >= 0)
 
   M <- ncol(dat); TT <- nrow(dat)
   transform_dat <- construct_AR_basis(dat, thres_u = thres_u, ...)
