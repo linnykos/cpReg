@@ -257,4 +257,28 @@ test_that(".objective_func is computed correctly",{
   expect_true(all(bool_vec))
 })
 
+######################
 
+## .rowwise_glmnet is correct
+
+test_that(".rowwise_glmnet works", {
+  set.seed(10)
+  M <- 5; TT <- 100
+  nu <- 0.1*runif(M)
+  A <- 0.1*matrix(runif(M*M), M, M)
+
+  dat <- generative_model(nu, A, TT, lag = 1)
+  transform_dat <- construct_AR_basis(dat, lag = 1)
+
+  res <- .rowwise_glmnet(dat[,1], transform_dat)
+  expect_true(nrow(res$glmnet.fit$beta) == 5)
+
+  expect_true(class(res) == "cv.glmnet")
+
+  res2 <- .rowwise_glmnet(dat[,1], transform_dat, lambda = 0.25)
+  expect_true(is.numeric(res2))
+  expect_true(length(res2) == 5+1)
+  expect_true(!is.matrix(res2))
+})
+
+#########################

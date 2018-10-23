@@ -84,11 +84,14 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
 # see https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#poi
 # TODO: Check if the intercept is penalized
 .rowwise_glmnet <- function(response, covariates, lambda = NA){
+  stopifnot(length(response) == nrow(covariates))
+  TT <- length(response)
+
   if(is.na(lambda)){
-    glmnet::cv.glmnet(covariates, response, family = "poisson", alpha = 1)
+    glmnet::cv.glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1)
 
   } else {
-    res <- glmnet::glmnet(covariates, response, family = "poisson", alpha = 1)
+    res <- glmnet::glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1)
     as.numeric(glmnet::coef.glmnet(res, s = lambda))
   }
 }
