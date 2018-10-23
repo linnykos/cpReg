@@ -319,3 +319,78 @@ test_that("stationary_ar works for unknown lambda", {
   expect_true(length(res$nu) == M)
   expect_true(all(dim(res$nu) == c(M,M)))
 })
+
+test_that("stationary_ar estimates have a smaller objective function that the truth", {
+  trials <- 5
+
+  bool_vec <- sapply(1:trials, function(x){
+    set.seed(x)
+    M <- 5; TT <- 100
+    nu <- 0.1*runif(M)
+    A <- 0.1*matrix(runif(M*M), M, M)
+    A[sample(1:prod(dim(A)), round(0.7*prod(dim(A))))] <- 0
+
+    dat <- generative_model(nu, A, TT, lag = 1)
+    transform_dat <- construct_AR_basis(dat, lag = 1)
+
+    fit <- stationary_ar(dat, lag = 1, verbose = F)
+    res1 <- .objective_func(fit$nu, fit$A, dat, transform_dat, lambda = fit$lambda)
+    res2 <- .objective_func(nu, A, dat, transform_dat, lambda = fit$lambda)
+
+    res1 < res2
+  })
+
+  expect_true(all(bool_vec))
+})
+
+test_that("stationary_ar gives better fit than dense alternatives", {
+  trials <- 5
+
+  bool_vec <- sapply(1:trials, function(x){
+    set.seed(x)
+    M <- 5; TT <- 100
+    nu <- 0.1*runif(M)
+    A <- 0.1*matrix(runif(M*M), M, M)
+    A[sample(1:prod(dim(A)), round(0.7*prod(dim(A))))] <- 0
+
+    dat <- generative_model(nu, A, TT, lag = 1)
+    transform_dat <- construct_AR_basis(dat, lag = 1)
+
+    fit <- stationary_ar(dat, lag = 1, verbose = F)
+    res1 <- .objective_func(fit$nu, fit$A, dat, transform_dat, lambda = fit$lambda)
+
+    A_new <- matrix(runif(M*M), M, M)
+    res2 <- .objective_func(fit$nu, A_new, dat, transform_dat, lambda = fit$lambda)
+
+    res1 < res2
+  })
+
+  expect_true(all(bool_vec))
+})
+
+test_that("stationary_ar gives better fit than sparse alternatives", {
+  trials <- 5
+
+  bool_vec <- sapply(1:trials, function(x){
+    set.seed(x)
+    M <- 5; TT <- 100
+    nu <- 0.1*runif(M)
+    A <- 0.1*matrix(runif(M*M), M, M)
+    A[sample(1:prod(dim(A)), round(0.7*prod(dim(A))))] <- 0
+
+    dat <- generative_model(nu, A, TT, lag = 1)
+    transform_dat <- construct_AR_basis(dat, lag = 1)
+
+    fit <- stationary_ar(dat, lag = 1, verbose = F)
+    res1 <- .objective_func(fit$nu, fit$A, dat, transform_dat, lambda = fit$lambda)
+
+    A_new <- matrix(runif(M*M), M, M)
+    A_new[sample(1:prod(dim(A_new)), round(0.7*prod(dim(A_new))))] <- 0
+    res2 <- .objective_func(fit$nu, A_new, dat, transform_dat, lambda = fit$lambda)
+
+    res1 < res2
+  })
+
+  expect_true(all(bool_vec))
+})
+
