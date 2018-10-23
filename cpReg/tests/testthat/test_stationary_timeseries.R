@@ -270,15 +270,12 @@ test_that(".rowwise_glmnet works", {
   dat <- generative_model(nu, A, TT, lag = 1)
   transform_dat <- construct_AR_basis(dat, lag = 1)
 
-  res <- .rowwise_glmnet(dat[,1], transform_dat)
+  res <- .rowwise_glmnet(dat[,1], transform_dat, T)
   expect_true(nrow(res$glmnet.fit$beta) == 5)
 
   expect_true(class(res) == "cv.glmnet")
 
-  res2 <- .rowwise_glmnet(dat[,1], transform_dat, lambda = 0.25)
-  expect_true(is.numeric(res2))
-  expect_true(length(res2) == 5+1)
-  expect_true(!is.matrix(res2))
+  res2 <- .rowwise_glmnet(dat[,1], transform_dat, F)
+  expect_true("glmnet" %in% class(res2))
+  expect_true(nrow(res2$beta) == 5)
 })
-
-#########################

@@ -15,7 +15,7 @@ stationary_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.
   if(verbose) print("Starting to estimate coefficients row-wise: ")
   res_list <- lapply(1:M, function(x){
     if(M > 10 && x %% floor(M/10) == 0) cat('*')
-    .rowwise_glmnet(dat[,x], transform_dat[,x])
+    .rowwise_glmnet(dat[,x], transform_dat, is.na(lambda))
   })
 
   # if lambda is NA, combine the results together
@@ -26,8 +26,9 @@ stationary_ar <- function(dat, thres_u = round(quantile(dat[dat > 0], probs = 0.
     est <- .extract_lambdas(res_list, lambda)
   }
 
+  obj_val <- .objective_func(nu, A, dat, transform_dat)
   stopifnot(nrow(A) == nrow(dat), ncol(A) == ncol(transform_dat))
-  structure(list(nu = est$nu, A = est$A), class = "cp_ar1")
+  structure(list(obj_val = obj_val, nu = est$nu, A = est$A), class = "cp_ar1")
 }
 
 generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
@@ -82,16 +83,16 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
 }
 
 # see https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#poi
-# TODO: Check if the intercept is penalized
-.rowwise_glmnet <- function(response, covariates, lambda = NA){
+.rowwise_glmnet <- function(response, covariates, cv = TRUE){
   stopifnot(length(response) == nrow(covariates))
   TT <- length(response)
 
-  if(is.na(lambda)){
-    glmnet::cv.glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1)
+  if(cv){
+    if(TT < 30) stop("Not enough observations to perform cross validation")
+    glmnet::cv.glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1,
+                      nfolds = min(max(floor(TT/10), 3), 10))
 
   } else {
-    res <- glmnet::glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1)
-    as.numeric(glmnet::coef.glmnet(res, s = lambda))
+    glmnet::glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1)
   }
 }
