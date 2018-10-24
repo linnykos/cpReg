@@ -23,7 +23,7 @@ sum((A - fit$A)^2)
 
 ## do a larger example
 set.seed(10)
-M <- 100; TT <- 100
+M <- 50; TT <- 500
 nu <- rep(0, M)
 # form block-wise A
 A <- matrix(0, M, M)
@@ -39,7 +39,9 @@ dat <- cpReg::generative_model(nu, A, TT, lag = 1, thres_u = Inf)
 
 # fit the model
 fit <- cpReg::stationary_ar(dat, thres_u = Inf, basis_function = construct_AR_basis,
-                            lambda = NA, verbose = T, lag = 1, intercept = F)
+                            lambda = NA, sparsity = length(which(A == 0))/prod(dim(A)),
+                            verbose = T, lag = 1, intercept = F)
+length(which(fit$A == 0))/prod(dim(fit$A))
 
 # visualize the sparsity patterns
 .rotate <- function(mat){t(mat)[,nrow(mat):1]}
@@ -50,5 +52,5 @@ image(.rotate(tmp), breaks = c(-.5,.5,1.5), col = c("gray", "red"), asp = T)
 
 tmp <- fit$A; tmp[tmp != 0] <- 1
 image(.rotate(tmp), breaks = c(-.5,.5,1.5), col = c("gray", "red"), asp = T)
-
+quantile(fit$A[fit$A != 0])
 

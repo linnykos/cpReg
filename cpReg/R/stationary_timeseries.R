@@ -23,9 +23,10 @@
 #' objective value (\code{obj_val}), the estimated intercepts (\code{nu}) and
 #' the estimated transition matrix (\code{A}).
 #' @export
-stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)), lambda = NA,
-                  basis_function = construct_AR_basis, intercept = T,
-                  verbose = F, ...){
+stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)),
+                          lambda = NA, sparsity = NA,
+                          basis_function = construct_AR_basis, intercept = T,
+                          verbose = F, ...){
 
   stopifnot(is.matrix(dat), nrow(dat) > 1)
   stopifnot(all(dat >= 0), all(dat %% 1 == 0))
@@ -39,13 +40,17 @@ stationary_ar <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pro
   if(verbose) cat("\nStarting to estimate coefficients row-wise: ")
   res_list <- lapply(1:M, function(x){
     if(M > 10 && x %% floor(M/10) == 0) cat('*')
-    .rowwise_glmnet(dat[,x], transform_dat, is.na(lambda), intercept =  intercept)
+    .rowwise_glmnet(dat[,x], transform_dat, (is.na(lambda) & is.na(sparsity)), intercept =  intercept)
   })
 
   # if lambda is NA, combine the results together
+  if(verbose) cat("\nStarting to assemble estimator")
   if(is.na(lambda)) {
-    if(verbose) cat("\nStarting to combine across different lambdas")
-    est <- .combine_lambdas(res_list, dat, transform_dat, verbose = verbose)
+    if(!is.na(sparsity)){
+      est <- .extract_lambdas_sparsity(res_list, sparsity, verbose = verbose)
+    } else {
+      est <- .combine_lambdas(res_list, dat, transform_dat, verbose = verbose)
+    }
   } else {
     est <- .extract_lambdas(res_list, lambda)
   }

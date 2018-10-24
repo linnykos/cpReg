@@ -14,6 +14,27 @@
   list(lambda = lambda, nu = nu, A = A)
 }
 
+.extract_lambdas_sparsity <- function(res_list, s, verbose = F, max_length = 100){
+  stopifnot(all(sapply(res_list, function(x){"fishnet" %in% class(x)})))
+  stopifnot(0 <= s, s <= 1)
+
+  lambda_all <- sort(unique(unlist(lapply(res_list, function(x){x$lambda}))))
+  if(length(lambda_all) > max_length){
+    lambda_all <- lambda_all[sort(unique(round(seq(1, length(lambda_all), length.out = max_length))))]
+  }
+
+  if(verbose) cat(paste0("\nEvaluating many estimates of A for sparsity: "))
+  sparsity_vec <- sapply(1:length(lambda_all), function(x){
+    if(verbose & x %% floor(length(lambda_all)/10) == 0) cat('*')
+    res <- .extract_lambdas(res_list, lambda = lambda_all[x])
+    length(which(res$A == 0))/prod(dim(res$A))
+  })
+
+  lambda_chosen <- lambda_all[which.min(abs(sparsity_vec - s))]
+
+  .extract_lambdas(res_list, lambda = lambda_chosen)
+}
+
 .combine_lambdas <- function(res_list, dat, transform_dat, verbose = verbose){
   stopifnot(all(sapply(res_list, function(x){class(x)=="cv.glmnet"})))
   stopifnot(all(sapply(res_list, function(x){"fishnet" %in% class(x$glmnet.fit)})))
@@ -24,7 +45,7 @@
   lambda_all <- sort(unique(c(lambda_min)))
 
   # form many estimates of A
-  if(verbose) cat(paste0("\nForming and evaluating many estimates of A: "))
+  if(verbose) cat(paste0("\nEvaluating many estimates of A for cv: "))
   d <- length(res_list)
   len <- length(lambda_all)
   obj_min <- Inf
