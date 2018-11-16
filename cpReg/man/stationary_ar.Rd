@@ -5,8 +5,9 @@
 \title{Poisson time series, penality is L_{1,1}}
 \usage{
 stationary_ar(dat, thres_u = round(stats::quantile(dat[dat > 0], probs =
-  0.75)), lambda = NA, basis_function = construct_AR_basis,
-  intercept = T, verbose = F, ...)
+  0.75)), lambda = NA, sparsity = NA,
+  basis_function = construct_AR_basis, intercept = T, verbose = F,
+  ...)
 }
 \arguments{
 \item{dat}{Count data, where each row represents a different time step and each
