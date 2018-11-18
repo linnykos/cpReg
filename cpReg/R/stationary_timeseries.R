@@ -138,14 +138,15 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
 .rowwise_glmnet <- function(response, covariates, cv = TRUE, intercept = TRUE){
   stopifnot(length(response) == nrow(covariates))
   TT <- length(response)
+  stopifnot(TT > 2)
 
   if(cv){
     if(TT < 30) stop("Not enough observations to perform cross validation")
-    glmnet::cv.glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1,
+    glmnet::cv.glmnet(x = covariates[1:(TT-1),,drop = F], y = response[2:TT], family = "poisson", alpha = 1,
                       nfolds = min(max(floor(TT/10), 3), 10), intercept = intercept)
 
   } else {
-    glmnet::glmnet(x = covariates[1:(TT-1),], y = response[2:TT], family = "poisson", alpha = 1,
+    glmnet::glmnet(x = covariates[1:(TT-1),,drop = F], y = response[2:TT], family = "poisson", alpha = 1,
                    intercept = intercept)
   }
 }
