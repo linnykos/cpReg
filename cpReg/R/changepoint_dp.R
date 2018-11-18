@@ -1,4 +1,19 @@
-# ignore ALL changepoints of size = 2
+#' Changepoint multivariate Poisson time series, penality is L_{1,1}
+#'
+#' This method ignores ALL trying changepoints of size less than \code{min_spacing}.
+#'
+#' @param dat Count data, where each row represents a different time step and each
+#' column represents a different variable
+#' @param thres_u A positive threshold for the saturation effect
+#' @param lambda Tuning parameter for the regression problem. Cannot be \code{NA}
+#' @param gamma Tuning parameter to control the number of output changepoints. Cannot be \code{NA}
+#' @param min_spacing Positive integer to dictate the smallest gap in changepoints. Needed for numerical stability
+#' when calling \code{glmnet}
+#' @param verbose Boolean
+#'
+#' @return A list containing \code{obj_val} (the objective value),
+#' \code{partition} (the estimated partition) and \code{A_list} the estimated
+#' adjecency matrices within each partition
 .changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)),
                             lambda, gamma, min_spacing = 10,
                             verbose = T){
@@ -21,7 +36,7 @@
         lis[[j]] <- stationary_ar(dat = dat[j:i, , drop = F], thres_u = thres_u,
                                   lambda = lambda * sqrt(i-j), verbose = F,
                                   intercept = F)
-        tmp <- h[[j]]$obj_val #SOMETHING WERID
+        tmp <- h[[j]]$obj_val
         if(is.null(tmp)) tmp <- 0
         obj_vec[j] <- lis[[j]]$obj_val + tmp + gamma
       }
@@ -43,6 +58,8 @@
                                    A_list = A_list)
     h[[i]] <- h_obj
   }
+
+  h[[TT]]
 }
 
 .construct_list_obj <- function(obj_val, partition, A_list){

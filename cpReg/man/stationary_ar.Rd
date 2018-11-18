@@ -17,6 +17,8 @@ column represents a different variable}
 
 \item{lambda}{Tuning parameter for the regression problem, allowed to be \code{NA}}
 
+\item{sparsity}{If \code{is.na(lambda)}, then output the estimated matrix that yields the desired percentage of non-zeros}
+
 \item{basis_function}{The function to generate the variables to regress onto, which
 can possibly take addition inputs}
 

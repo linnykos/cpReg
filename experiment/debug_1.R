@@ -8,7 +8,7 @@ dat <- cpReg::generative_model(nu, A, TT, lag = 1, thres_u = 5)
 
 thres_u <- round(stats::quantile(dat[dat > 0], probs = 0.75))
 lambda <- 0.25
-gamma <- 1
+gamma <- 10
 verbose = T
 
 TT <- nrow(dat); M <- ncol(dat)
@@ -31,7 +31,7 @@ for(i in 2:(TT-1)){
       lis[[j]] <- stationary_ar(dat = dat[j:i, , drop = F], thres_u = thres_u,
                                 lambda = lambda * sqrt(i-j), verbose = F,
                                 intercept = F)
-      tmp <- h[[j]]$obj_val #SOMETHING WERID
+      tmp <- h[[j]]$obj_val
       if(is.null(tmp)) tmp <- 0
       obj_vec[j] <- lis[[j]]$obj_val + tmp + gamma
     }

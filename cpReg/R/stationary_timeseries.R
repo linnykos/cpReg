@@ -1,4 +1,4 @@
-#' Poisson time series, penality is L_{1,1}
+#' Multivariate Poisson time series, penality is L_{1,1}
 #'
 #' Solves the optimization problem (2.8) on https://arxiv.org/pdf/1802.04838.pdf.
 #' The penalty is fixed to be the L_{1,1} (sum of absolute value), but the
@@ -13,6 +13,7 @@
 #' column represents a different variable
 #' @param thres_u A positive threshold for the saturation effect
 #' @param lambda Tuning parameter for the regression problem, allowed to be \code{NA}
+#' @param sparsity If \code{is.na(lambda)}, then output the estimated matrix that yields the desired percentage of non-zeros
 #' @param basis_function The function to generate the variables to regress onto, which
 #' can possibly take addition inputs
 #' @param intercept Boolean to allow for estimating intercepts
