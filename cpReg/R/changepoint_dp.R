@@ -1,6 +1,8 @@
 #' Changepoint multivariate Poisson time series, penality is L_{1,1}
 #'
 #' This method ignores ALL trying changepoints of size less than \code{min_spacing}.
+#' The returned element in the list, \code{partition} denotes the LAST
+#' index of each interval.
 #'
 #' @param dat Count data, where each row represents a different time step and each
 #' column represents a different variable
@@ -14,7 +16,8 @@
 #' @return A list containing \code{obj_val} (the objective value),
 #' \code{partition} (the estimated partition) and \code{A_list} the estimated
 #' adjecency matrices within each partition
-.changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)),
+#' @export
+changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)),
                             lambda, gamma, min_spacing = 10,
                             verbose = T){
   # create hash table
@@ -59,6 +62,7 @@
     h[[i]] <- h_obj
   }
 
+  h[[TT]]$partition[1] <- 0
   h[[TT]]
 }
 

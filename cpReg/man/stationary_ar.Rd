@@ -2,7 +2,7 @@
 % Please edit documentation in R/stationary_timeseries.R
 \name{stationary_ar}
 \alias{stationary_ar}
-\title{Poisson time series, penality is L_{1,1}}
+\title{Multivariate Poisson time series, penality is L_{1,1}}
 \usage{
 stationary_ar(dat, thres_u = round(stats::quantile(dat[dat > 0], probs =
   0.75)), lambda = NA, sparsity = NA,
