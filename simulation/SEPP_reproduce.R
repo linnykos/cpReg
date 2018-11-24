@@ -20,9 +20,13 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  cpReg::stationary_ar(dat, thres_u = 6,
-                       basis_function = construct_AR_basis,
-                       lambda = NA, verbose = F, lag = 1)
+  fit1 <- cpReg::stationary_ar(dat, thres_u = 6,
+                               basis_function = construct_AR_basis,
+                               lambda = NA, verbose = F, lag = 1)
+  fit2 <- cpReg::stationary_ar(dat, thres_u = 6,
+                               basis_function = construct_AR_basis,
+                               lambda = 1/sqrt(vec["TT"]), verbose = F, lag = 1)
+  list(fit1 = fit1, fit2 = fit2)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
