@@ -22,7 +22,7 @@ rule <- function(vec){
 criterion <- function(dat, vec, y){
   cpReg::stationary_ar(dat, thres_u = 6,
                        basis_function = construct_AR_basis,
-                       lambda = NA, verbose = T, lag = 1)
+                       lambda = NA, verbose = F, lag = 1)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
@@ -31,7 +31,7 @@ criterion <- function(dat, vec, y){
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
-                                        cores = 5, as_list = T,
+                                        cores = 10, as_list = T,
                                         filepath = "../results/SEPP_tmp.RData",
                                         verbose = T)
 
