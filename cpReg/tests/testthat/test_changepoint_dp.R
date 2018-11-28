@@ -50,3 +50,20 @@ test_that("changepoint_dp can complete faster with spacing", {
   expect_true(res1["elapsed"] > res2["elapsed"])
 })
 
+################
+
+## generative_model_cp is correct
+
+test_that("generative_model_cp works", {
+  set.seed(10)
+  M <- 5; TT <- 100
+  nu <- rep(0, M)
+  A_list <- list(0.75*diag(M),
+                 matrix(0, M, M),
+                 0.5*matrix(runif(M*M), M, M))
+  changepoint_perc <- c(0.4, 0.6)
+
+  res <- generative_model_cp(nu, A_list, changepoint_perc, timesteps = 100)
+
+  expect_true(is.list(res))
+})

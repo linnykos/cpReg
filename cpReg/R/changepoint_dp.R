@@ -68,9 +68,51 @@ changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pr
   h[[TT]]
 }
 
+
+generative_model_cp <- function(nu, A_list, changepoint_perc,
+                                timesteps = 10, thres_u = 5,
+                                basis_function = construct_AR_basis,
+                                warning_val = 1000, ...){
+
+  stopifnot(all(changepoint_perc < 1), all(changepoint_perc > 0),
+            length(changepoint_perc) == length(unique(changepoint_perc)),
+            all(changepoint_perc == sort(changepoint_perc)))
+  stopifnot(length(changepoint_perc)+1 == length(A_list))
+  stopifnot(length(unique(sapply(A_list, ncol))) == 1,
+            length(unique(sapply(A_list, nrow))) == 1)
+
+  M <- length(nu); MK <- ncol(A_list[[1]]); TT <- timesteps
+  dat <- matrix(0, ncol = M, nrow = TT)
+
+  changepoint_idx <- round(TT*changepoint_perc)
+  idx <- 1
+
+  for(time in 1:TT){
+    if(idx <= length(changepoint_idx) && time > changepoint_idx[idx]) idx <- idx+1
+
+    obs_vec <- sapply(1:M, function(i){
+      vec <- construct_AR_basis(dat[which(1:TT <= time),,drop = F], thres_u = thres_u)
+      vec <- vec[nrow(vec),]
+      natural_param <- as.numeric(nu[i] + A_list[[idx]][i,] %*% vec)
+
+      if(!is.na(warning_val) & as.numeric(natural_param) > log(warning_val)){
+        stop(paste0("Natural parameters are exploding, with values above log of ", warning_val))
+      }
+      stats::rpois(1, lambda = exp(natural_param))
+    })
+
+    dat[time,] <- obs_vec
+  }
+
+  list(dat = dat, partition = changepoint_idx)
+}
+
+########
+
 .construct_list_obj <- function(obj_val, partition, A_list){
   stopifnot(length(A_list) == length(partition)-1)
   stopifnot(all(partition == sort(partition)), length(partition) == length(unique(partition)))
 
   list(obj_val = obj_val, partition = partition, A_list = A_list)
 }
+

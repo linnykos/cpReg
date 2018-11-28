@@ -1,0 +1,3 @@
+.gamma_oracle <- function(){
+
+}
