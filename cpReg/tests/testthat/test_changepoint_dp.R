@@ -33,3 +33,20 @@ test_that("changepoint_dp reacts properly to gamma", {
   expect_true(length(res1$partition) >= length(res2$partition))
   expect_true(length(res2$partition) >= length(res3$partition))
 })
+
+test_that("changepoint_dp can complete faster with spacing", {
+  set.seed(10)
+  M <- 5; TT <- 50
+  nu <- rep(0, M)
+  A <- 0.3*diag(M)
+  thres_u <- 5
+  dat <- cpReg::generative_model(nu, A, TT, lag = 1, thres_u = thres_u)
+
+  res1 <- system.time(changepoint_dp(dat, thres_u = thres_u, lambda = 0.05, gamma = 1,
+                         min_spacing = 10, verbose = F))
+  res2 <- system.time(changepoint_dp(dat, thres_u = thres_u, lambda = 0.05, gamma = 1,
+                                     min_spacing = 10, skip_interval = 5, verbose = F))
+
+  expect_true(res1["elapsed"] > res2["elapsed"])
+})
+

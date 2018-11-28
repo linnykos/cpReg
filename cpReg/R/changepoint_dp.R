@@ -18,21 +18,23 @@
 #' adjecency matrices within each partition
 #' @export
 changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], probs = 0.75)),
-                            lambda, gamma, min_spacing = 10,
-                            verbose = T){
+                          lambda, gamma, min_spacing = 10,
+                          skip_interval = 1, verbose = T){
   # create hash table
   TT <- nrow(dat); M <- ncol(dat)
   h <- vector("list", TT)
+  TT_seq <- seq(1, TT, by = skip_interval)
 
-  for(i in 2:TT){
+  for(i in TT_seq){
+    if(i == 1) next()
     if(verbose & i %% floor(TT/10) == 0) cat('*')
 
     obj_vec <- rep(NA, i-1)
     lis <- vector("list", length = i-1)
 
     # search
-    for(j in 1:(i-1)){
-      if(i - j <= min_spacing){
+    for(j in TT_seq[TT_seq < i]){
+      if(i - j < min_spacing){
         lis[[j]] <- list(A = NA)
         obj_vec[j] <- Inf
       } else {
