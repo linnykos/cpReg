@@ -105,7 +105,7 @@ generative_model <- function(nu, A, timesteps = 10, thres_u = 5,
     dat[time,] <- obs_vec
   }
 
-  dat
+  structure(list(dat = dat), class = "SEPP")
 }
 
 ########

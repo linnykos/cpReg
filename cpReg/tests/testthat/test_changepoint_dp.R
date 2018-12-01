@@ -63,7 +63,8 @@ test_that("generative_model_cp works", {
                  0.5*matrix(runif(M*M), M, M))
   changepoint_perc <- c(0.4, 0.6)
 
-  res <- generative_model_cp(nu, A_list, changepoint_perc, timesteps = 100)
+  res <- generative_model_cp(nu, A_list, changepoint_perc, timesteps = TT)
 
   expect_true(is.list(res))
+  expect_true(class(res) == "SEPP_cp")
 })

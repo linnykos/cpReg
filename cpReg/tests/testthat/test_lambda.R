@@ -98,3 +98,25 @@ test_that(".combine_lambdas can fit properly, based on .extract_lambdas", {
   expect_true(sum(abs(res$nu - res2$nu)) <= 1e-6)
   expect_true(sum(abs(res$A - res2$A)) <= 1e-6)
 })
+
+###################
+
+## .lambda_oracle is correct
+
+test_that(".lambda_oracle works", {
+  set.seed(10)
+  M <- 5; TT <- 300
+  nu <- rep(0, M)
+  A_list <- list(0.75*diag(M),
+                 matrix(0, M, M),
+                 0.5*matrix(runif(M*M), M, M))
+  changepoint_perc <- c(0.4, 0.6)
+
+  obj <- generative_model_cp(nu, A_list, changepoint_perc, timesteps = TT)
+
+  res <- .lambda_oracle(obj, intercept = F)
+
+  expect_true(is.numeric(res))
+  expect_true(length(res) == 1)
+  expect_true(res > 0)
+})

@@ -1,3 +1,25 @@
+.lambda_oracle <- function(obj,
+                          thres_u = round(stats::quantile(obj$dat[obj$dat > 0], probs = 0.75)),
+                          basis_function = construct_AR_basis, intercept = T){
+
+  stopifnot(class(obj) == "SEPP_cp")
+  changepoint_idx <- c(0, obj$partition, nrow(obj$dat))
+  k <- length(changepoint_idx)-1
+  lambda_vec <- sapply(1:k, function(i){
+    len <- changepoint_idx[i+1]-changepoint_idx[i]
+
+    lambda <- stationary_ar(obj$dat[(changepoint_idx[i]+1):changepoint_idx[i+1],],
+                            thres_u = thres_u, lambda = NA,
+                            basis_function = basis_function, intercept = intercept,
+                            verbose = F)$lambda
+    lambda/sqrt(len) * (1/len)
+  })
+
+  sum(lambda_vec)
+}
+
+#####
+
 .extract_lambdas <- function(res_list, lambda){
   stopifnot(all(sapply(res_list, function(x){"fishnet" %in% class(x)})))
 

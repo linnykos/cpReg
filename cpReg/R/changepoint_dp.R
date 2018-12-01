@@ -22,28 +22,32 @@ changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pr
                           skip_interval = 1, verbose = T){
   # create hash table
   TT <- nrow(dat); M <- ncol(dat)
-  h <- vector("list", TT)
   TT_seq <- seq(1, TT, by = skip_interval)
+  TT_seq[length(TT_seq)] <- TT
+  h <- vector("list", length(TT_seq)-1)
+
 
   for(i in TT_seq){
     if(i == 1) next()
-    if(verbose & i %% floor(TT/10) == 0) cat('*')
+    idxi <- which(TT_seq[-1] == i)
+    if(verbose & idxi %% floor(length(TT_seq)/10) == 0) cat('*')
 
-    obj_vec <- rep(NA, i-1)
-    lis <- vector("list", length = i-1)
+    obj_vec <- rep(NA, idxi-1)
+    lis <- vector("list", length = length(TT_seq[TT_seq < i]))
 
     # search
     for(j in TT_seq[TT_seq < i]){
+      idxj <- which(TT_seq == j)
       if(i - j < min_spacing){
-        lis[[j]] <- list(A = NA)
-        obj_vec[j] <- Inf
+        lis[[idxj]] <- list(A = NA)
+        obj_vec[idxj] <- Inf
       } else {
-        lis[[j]] <- stationary_ar(dat = dat[j:i, , drop = F], thres_u = thres_u,
+        lis[[idxj]] <- stationary_ar(dat = dat[j:i, , drop = F], thres_u = thres_u,
                                   lambda = lambda * sqrt(i-j), verbose = F,
                                   intercept = F)
-        tmp <- h[[j]]$obj_val
+        tmp <- h[[idxj]]$obj_val
         if(is.null(tmp)) tmp <- 0
-        obj_vec[j] <- lis[[j]]$obj_val + tmp + gamma
+        obj_vec[idxj] <- lis[[idxj]]$obj_val + tmp + gamma
       }
     }
 
@@ -61,11 +65,11 @@ changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pr
 
     h_obj <- .construct_list_obj(min(obj_vec), partition = partition,
                                    A_list = A_list)
-    h[[i]] <- h_obj
+    h[[idxi]] <- h_obj
   }
 
-  h[[TT]]$partition[1] <- 0
-  h[[TT]]
+  h[[length(TT_seq)-1]]$partition[1] <- 0
+  h[[length(TT_seq)-1]]
 }
 
 
@@ -104,7 +108,7 @@ generative_model_cp <- function(nu, A_list, changepoint_perc,
     dat[time,] <- obs_vec
   }
 
-  list(dat = dat, partition = changepoint_idx)
+  structure(list(dat = dat, partition = changepoint_idx), class = "SEPP_cp")
 }
 
 ########
