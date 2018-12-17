@@ -18,7 +18,7 @@ res1 <- changepoint_dp(obj$dat, lambda = lambda, gamma = 2,
                       skip_interval = 500, verbose = T)
 
 #just right
-res2 <- changepoint_dp(obj$dat, lambda = lambda, gamma = 0.01,
+res2 <- changepoint_dp(obj$dat, lambda = 10, gamma = 40,
                       skip_interval = 500, verbose = T)
 
 #too many estimates
@@ -26,7 +26,7 @@ res3 <- changepoint_dp(obj$dat, lambda = lambda, gamma = 0.0001,
                       skip_interval = 500, verbose = T)
 
 ############################
-
+lambda <- 10
 changepoint_idx <- c(0,obj$partition,TT)
 k <- length(changepoint_idx)
 obj_middle <- sum(sapply(1:(k-1), function(i){

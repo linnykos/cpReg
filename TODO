@@ -2,4 +2,6 @@
 - Add tests for the fixed sparsity way to do model selection
 - Find a good way to empirically compute the minimum eigenvalue
 - allow setting of gamma after-the-fact
-- try out the simulation setting in the original SEPP paper
+- figure out a good heuristic for gamma (seems to depend on lambda)
+ -- maybe i should be looking only at the NLL, not the lambda term?
+- figure out why i have numerical instability
