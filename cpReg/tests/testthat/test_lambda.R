@@ -8,7 +8,8 @@ test_that(".extract_lambdas works", {
   nu <- 0.1*runif(M)
   A <- 0.1*matrix(runif(M*M), M, M)
 
-  dat <- generative_model(nu, A, TT, lag = 1)
+  obj <- generative_model(nu, A, TT, lag = 1)
+  dat <- obj$dat
   transform_dat <- construct_AR_basis(dat, lag = 1)
 
   res_list <- lapply(1:M, function(x){
@@ -31,7 +32,8 @@ test_that(".extract_lambdas implies that penalization doesn't affect intercepts"
   nu <- 0.1*runif(M)
   A <- 0.1*matrix(runif(M*M), M, M)
 
-  dat <- generative_model(nu, A, TT, lag = 1)
+  obj <- generative_model(nu, A, TT, lag = 1)
+  dat <- obj$dat
   transform_dat <- construct_AR_basis(dat, lag = 1)
 
   res_list <- lapply(1:M, function(x){
@@ -56,7 +58,8 @@ test_that(".combine_lambdas works", {
   nu <- 0.1*runif(M)
   A <- 0.1*matrix(runif(M*M), M, M)
 
-  dat <- generative_model(nu, A, TT, lag = 1)
+  obj <- generative_model(nu, A, TT, lag = 1)
+  dat <- obj$dat
   transform_dat <- construct_AR_basis(dat, lag = 1)
 
   res_list <- lapply(1:M, function(x){
@@ -79,7 +82,8 @@ test_that(".combine_lambdas can fit properly, based on .extract_lambdas", {
   nu <- 0.1*runif(M)
   A <- 0.1*matrix(runif(M*M), M, M)
 
-  dat <- generative_model(nu, A, TT, lag = 1)
+  obj <- generative_model(nu, A, TT, lag = 1)
+  dat <- obj$dat
   transform_dat <- construct_AR_basis(dat, lag = 1)
 
   res_list <- lapply(1:M, function(x){

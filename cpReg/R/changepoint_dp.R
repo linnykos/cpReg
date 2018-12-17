@@ -47,7 +47,7 @@ changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pr
                                   intercept = F)
         tmp <- h[[idxj]]$obj_val
         if(is.null(tmp)) tmp <- 0
-        obj_vec[idxj] <- lis[[idxj]]$obj_val + tmp + gamma
+        obj_vec[idxj] <- lis[[idxj]]$obj_val + tmp + gamma*TT
       }
     }
 
