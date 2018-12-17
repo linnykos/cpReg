@@ -13,35 +13,45 @@ lambda <- .lambda_oracle(obj, intercept = F)
 
 ###########
 
-res <- changepoint_dp(obj$dat, lambda = lambda, gamma = 0.01,
-                      min_spacing = 500, skip_interval = 500, verbose = T)
+#under estimate
+res1 <- changepoint_dp(obj$dat, lambda = lambda, gamma = 2,
+                      skip_interval = 500, verbose = T)
 
-obj_val <- res$obj_val - (length(res$partition)-1)*5*nrow(obj$dat)
-# thought experiment:
-# so does the objective function above (for res, w/o penalty) match
-#  the one i get when i run gamma?
-#  let's try this: I want to decompose the obj function into (nll + lambda) and
-#   (gamma). run the above function. it should be exact, so i'll get something
-#   for (nll+lambda) and (gamma). Then, use the gamma function and see
-#   what the (nll+lambda) is when I add a lot of extraneous spacing
+#just right
+res2 <- changepoint_dp(obj$dat, lambda = lambda, gamma = 0.01,
+                      skip_interval = 500, verbose = T)
 
+#too many estimates
+res3 <- changepoint_dp(obj$dat, lambda = lambda, gamma = 0.0001,
+                      skip_interval = 500, verbose = T)
 
-obj3 <- sum(sapply(1:(length(res$partition)-1), function(i){
-  len <- res$partition[i+1]-res$partition[i]
-
-  stationary_ar(obj$dat[(res$partition[i]+1):res$partition[i+1],],
-                lambda = lambda*sqrt(len), intercept = F)$obj_val
-}))
-
-######
+############################
 
 changepoint_idx <- c(0,obj$partition,TT)
 k <- length(changepoint_idx)
-obj2 <- sapply(1:(k-1), function(i){
-  print(i)
+obj_middle <- sum(sapply(1:(k-1), function(i){
   len <- changepoint_idx[i+1]-changepoint_idx[i]
 
   stationary_ar(obj$dat[(changepoint_idx[i]+1):changepoint_idx[i+1],],
                 lambda = lambda*sqrt(len), intercept = F)$obj_val
-})
-sum(obj2)+TT*2*(length(changepoint_idx)-1)
+}))
+
+changepoint_idx <- c(0,750,1500,2250,3000,4250,5000)
+k <- length(changepoint_idx)
+obj_many <- sum(sapply(1:(k-1), function(i){
+  len <- changepoint_idx[i+1]-changepoint_idx[i]
+
+  stationary_ar(obj$dat[(changepoint_idx[i]+1):changepoint_idx[i+1],],
+                lambda = lambda*sqrt(len), intercept = F)$obj_val
+}))
+
+changepoint_idx <- c(0,1500,5000)
+k <- length(changepoint_idx)
+obj_few <- sum(sapply(1:(k-1), function(i){
+  len <- changepoint_idx[i+1]-changepoint_idx[i]
+
+  stationary_ar(obj$dat[(changepoint_idx[i]+1):changepoint_idx[i+1],],
+                lambda = lambda*sqrt(len), intercept = F)$obj_val
+}))
+
+plot(c(obj_few, obj_middle, obj_many))
