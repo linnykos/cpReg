@@ -29,7 +29,7 @@ changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pr
 
   for(i in TT_seq){
     if(i == 1) next()
-    idxi <- which(TT_seq[-1] == i)
+    idxi <- which(TT_seq == i)
     if(verbose & idxi %% floor(length(TT_seq)/10) == 0) cat('*')
 
     obj_vec <- rep(NA, idxi-1)
@@ -68,8 +68,8 @@ changepoint_dp <- function(dat, thres_u = round(stats::quantile(dat[dat > 0], pr
     h[[idxi]] <- h_obj
   }
 
-  h[[length(TT_seq)-1]]$partition[1] <- 0
-  h[[length(TT_seq)-1]]
+  h[[length(TT_seq)]]$partition[1] <- 0
+  h[[length(TT_seq)]]
 }
 
 

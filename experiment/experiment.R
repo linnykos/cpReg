@@ -13,7 +13,7 @@ lambda <- .lambda_oracle(obj, intercept = F)
 
 ###########
 
-res <- changepoint_dp(obj$dat, lambda = lambda, gamma = 5,
+res <- changepoint_dp(obj$dat, lambda = lambda, gamma = 0.01,
                       min_spacing = 500, skip_interval = 500, verbose = T)
 
 obj_val <- res$obj_val - (length(res$partition)-1)*5*nrow(obj$dat)
@@ -33,4 +33,15 @@ obj3 <- sum(sapply(1:(length(res$partition)-1), function(i){
                 lambda = lambda*sqrt(len), intercept = F)$obj_val
 }))
 
-#something is deeply wrong..
+######
+
+changepoint_idx <- c(0,obj$partition,TT)
+k <- length(changepoint_idx)
+obj2 <- sapply(1:(k-1), function(i){
+  print(i)
+  len <- changepoint_idx[i+1]-changepoint_idx[i]
+
+  stationary_ar(obj$dat[(changepoint_idx[i]+1):changepoint_idx[i+1],],
+                lambda = lambda*sqrt(len), intercept = F)$obj_val
+})
+sum(obj2)+TT*2*(length(changepoint_idx)-1)
