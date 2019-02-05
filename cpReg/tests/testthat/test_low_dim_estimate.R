@@ -51,3 +51,14 @@ test_that(".special_concatenate works with is_list = T", {
   expect_true(length(res) == 3)
 })
 
+###############
+
+## low_dim_estimate is correct
+
+test_that("low_dim_estimate works", {
+  set.seed(10)
+  dat <- create_data(list(c(1,1,1), c(2,-1,2)), c(0, 50, 100))
+
+  res <- low_dim_estimate(dat$X, dat$y, gamma = 1, delta = 10, verbose = T)
+})
+

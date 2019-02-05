@@ -7,7 +7,7 @@ low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
 
   # special case for the first split
   partition <- NA; coef_list <- NA
-  h[[1]] <- .construct_list_obj(obj_val = 0, partition = 1, coef_list = list(numeric(0)))
+  h[[1]] <- .construct_list_obj(obj_val = 0, partition = 0, coef_list = list(numeric(0)))
 
   # search through all possible split points
   for(i in n_seq[-1]){
