@@ -5,3 +5,4 @@
 - figure out a good heuristic for gamma (seems to depend on lambda)
  -- maybe i should be looking only at the NLL, not the lambda term?
 - figure out why i have numerical instability
+- how to refit A (both from partition or from sparsity)
