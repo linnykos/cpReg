@@ -71,7 +71,7 @@ low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
 
   } else {
     stopifnot(!is.list(obj1))
-    c(obj1, obj2)
+    obj1 <- c(obj1, obj2)
   }
 
   obj1
