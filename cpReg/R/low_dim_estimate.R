@@ -47,7 +47,7 @@ low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
 }
 
 .construct_list_obj <- function(obj_val, partition, coef_list){
-  stopifnot(length(coef_list) == length(partition)-1)
+  stopifnot(length(coef_list) == length(partition)-1 | partition == 0)
   stopifnot(all(partition == sort(partition)),
             length(partition) == length(unique(partition)))
 

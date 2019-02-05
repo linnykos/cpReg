@@ -22,6 +22,11 @@ test_that(".construct_list_obj works", {
   expect_true(all(names(res) == c("obj_val", "partition", "coef_list")))
 })
 
+test_that(".construct_list_obj can start from 0", {
+  res <- .construct_list_obj(obj_val = 0, partition = 0, coef_list = list(numeric(0)))
+  expect_true(is.list(res))
+})
+
 ########
 
 ## .local_regression is correct
@@ -60,5 +65,8 @@ test_that("low_dim_estimate works", {
   dat <- create_data(list(c(1,1,1), c(2,-1,2)), c(0, 50, 100))
 
   res <- low_dim_estimate(dat$X, dat$y, gamma = 1, delta = 10, verbose = T)
+
+  expect_true(is.list(res))
+  expect_true(all(names(res) == c("obj_val", "partition", "coef_list")))
 })
 
