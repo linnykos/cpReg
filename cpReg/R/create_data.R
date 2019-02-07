@@ -4,7 +4,7 @@ create_data <- function(coef_list, partition){
 
   n <- partition[length(partition)]
   d <- length(coef_list[[1]])
-  X <- matrix(rnorm(n*d), nrow = n, ncol = d)
+  X <- matrix(stats::rnorm(n*d), nrow = n, ncol = d)
   y <- numeric(n)
 
   for(i in 1:(length(partition)-1)){

@@ -1,5 +1,5 @@
 low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
-  # create hash table
+  # create list of results to store DP
   n <- nrow(X); d <- ncol(X)
   gamma2 <- gamma*n
   n_seq <- .format_sequence(n, delta)
