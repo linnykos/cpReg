@@ -64,7 +64,7 @@ test_that("low_dim_estimate works", {
   set.seed(10)
   dat <- create_data(list(c(1,1,1), c(2,-1,2)), c(0, 50, 100))
 
-  res <- low_dim_estimate(dat$X, dat$y, gamma = 1, delta = 10, verbose = T)
+  res <- low_dim_estimate(dat$X, dat$y, gamma = 1, delta = 10, verbose = F)
 
   expect_true(is.list(res))
   expect_true(all(names(res) == c("obj_val", "partition", "coef_list")))

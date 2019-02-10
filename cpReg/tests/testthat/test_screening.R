@@ -22,3 +22,21 @@ test_that(".compute_cusum is maximized at the right location", {
   expect_true(which.max(res) == 100)
 })
 
+###############
+
+## .find_breakpoint is correct
+
+test_that(".find_breakpoint works", {
+  fit <- matrix(0, nrow = 200, ncol = 3)
+  fit[1:100,] <- c(rep(1,100), rep(0, 100), rep(1,100))
+  fit[101:200,] <- c(rep(-1,100), rep(0, 100), rep(-1,100))
+  interval <- c(0, 200)
+
+  res <- .find_breakpoint(fit, interval)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+  expect_true(all(names(res) == c("val", "b")))
+})
+
+
