@@ -70,9 +70,13 @@ screening <- function(fit, tau, M = 100){
 
 .compute_cusum <- function(fit, s, e, b){
   #Q: check to see if anything funny happens w/ s ane e being too short...
-  stopifnot(s < b, b < e, s > 1, e < nrow(fit))
+  stopifnot(s < b, b < e, s >= 0, e <= nrow(fit))
 
   factor1 <- sqrt((e-b)/((e-s)*(b-s)))
   factor2 <- sqrt((b-s)/((e-s)*(e-b)))
-  .l2norm(factor1*colSums(fit[s:b,]) - factor2*fit[b+1:e,])
+  .l2norm(factor1*colSums(fit[(s+1):b,,drop = F]) - factor2*colSums(fit[(b+1):e,,drop = F]))
+}
+
+.l2norm <- function(x){
+  sqrt(sum(x^2))
 }
