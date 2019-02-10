@@ -30,7 +30,7 @@ screening <- function(fit, tau, M = 100){
   stopifnot(n >= 2)
 
   random_intervals <- lapply(1:M, function(x){
-    sort(sample(1:n, replace = F))
+    sort(sample(1:n, 2, replace = F))
   })
 
   random_intervals[[M+1]] <- c(1,n)

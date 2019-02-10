@@ -39,4 +39,33 @@ test_that(".find_breakpoint works", {
   expect_true(all(names(res) == c("val", "b")))
 })
 
+################
 
+## .generate_intervals is correct
+
+test_that(".generate_intervals works", {
+  res <- .generate_intervals(200, 100)
+
+  expect_true(length(res) == 101)
+  expect_true(is.list(res))
+  expect_true(all(sapply(res, function(x){x[1] < x[2]})))
+})
+
+################
+
+## .truncate is correct
+
+test_that(".truncate works", {
+  random_intervals <- .generate_intervals(200, 100)
+  res <- .truncate(c(100,120), random_intervals)
+
+  expect_true(is.list(res))
+  expect_true(all(sapply(res, function(x){x[1] < x[2]})))
+})
+
+test_that(".truncate can return the same intervals", {
+  random_intervals <- .generate_intervals(200, 100)
+  res <- .truncate(c(1,200), random_intervals)
+
+  expect_true(all(sapply(1:101, function(x){all(res[[x]] == random_intervals[[x]])})))
+})
