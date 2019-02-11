@@ -61,8 +61,8 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = paramMat[,"trials"],
-                                        cores = 15, as_list = F,
-                                        filepath = "main_powercurve_onejump_fl_tmp.RData",
+                                        paramMat = paramMat, trials = 10,
+                                        cores = 10, as_list = T,
+                                        filepath = "low_dim_simulation_tmp.RData",
                                         verbose = T)
-save.image("main_powercurve_onejump_fl.RData")
+save.image("low_dim_simulation.RData")
