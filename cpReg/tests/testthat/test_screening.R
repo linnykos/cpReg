@@ -116,7 +116,22 @@ test_that("screening works", {
   fit[1:100,] <- c(rep(1,100), rep(0, 100), rep(1,100))
   fit[101:200,] <- c(rep(-1,100), rep(0, 100), rep(-1,100))
 
-  res <- screening(fit, tau = 10)
+  res <- screening(fit, tau = 10, verbose = F)
 
   expect_true(is.numeric(res))
+  expect_true(all(res == c(0, 100, 200)))
+})
+
+test_that("screening works for a more complex setting", {
+  set.seed(10)
+  fit <- matrix(0, nrow = 300, ncol = 3)
+  fit[1:100,] <- c(rep(1,100), rep(0, 100), rep(1,100))
+  fit[101:200,] <- c(rep(-1,100), rep(0, 100), rep(-1,100))
+  fit[201:300,] <- c(rep(1,100), rep(0, 100), rep(1,100))
+  fit <- fit+rnorm(900, sd = 0.1)
+
+  res <- screening(fit, tau = 10, verbose = F)
+
+  expect_true(is.numeric(res))
+  expect_true(all(res == c(0, 100, 200, 300)))
 })

@@ -6,10 +6,10 @@ library(ChangePointCalc)
 zz <- ChangePointCalc::SGLmain(dat, gamma = 1, standardize = F) #?? not sure what's going on
 
 
-lambda=2/(n)^0.5
 library(CVXR)
 X <- dat$X; y <- dat$y
 p <- ncol(X); n <- nrow(X); X <- t(X)
+lambda=2/(n)^0.5
 beta <- Variable(n,p)
 D=matrix(0,nrow=n, ncol=n)
 diag(D)=1
@@ -24,3 +24,5 @@ prob <- Problem( Minimize( (cvxr_norm(y-diag( beta%*%X),p=2)^2)/n   +
 result <- solve(prob,solver="SCS")
 beta.hat=result$getValue(beta) #looks like it roughly works, good enough
 beta.hat
+
+screening(beta.hat, tau = 5)
