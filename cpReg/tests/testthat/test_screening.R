@@ -56,6 +56,7 @@ test_that(".generate_intervals works", {
 ## .truncate is correct
 
 test_that(".truncate works", {
+  set.seed(10)
   random_intervals <- .generate_intervals(200, 100)
   res <- .truncate(c(100,120), random_intervals)
 
@@ -64,8 +65,18 @@ test_that(".truncate works", {
 })
 
 test_that(".truncate can return the same intervals", {
+  set.seed(10)
   random_intervals <- .generate_intervals(200, 100)
   res <- .truncate(c(1,200), random_intervals)
 
   expect_true(all(sapply(1:101, function(x){all(res[[x]] == random_intervals[[x]])})))
+})
+
+test_that(".truncate all lie in the range", {
+  set.seed(10)
+  random_intervals <- .generate_intervals(200, 100)
+  res <- .truncate(c(100,120), random_intervals)
+
+  expect_true(all(sapply(res, function(x){x[1]>=100})))
+  expect_true(all(sapply(res, function(x){x[2]<=120})))
 })

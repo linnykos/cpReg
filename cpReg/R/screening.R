@@ -53,7 +53,15 @@ screening <- function(fit, tau, M = 100){
 
   interval_list <- interval_list[which(sapply(interval_list, length) > 0)]
   stopifnot(length(interval_list) >= 0)
-  interval_list
+  .remove_duplicate(interval_list)
+}
+
+.remove_duplicate <- function(interval_list){
+  mat <- matrix(unlist(interval_list), ncol = 2, byrow = T)
+  vec <- mat[,1]*max(mat[,2]+1)+mat[,2]
+  idx <- which(!duplicated(vec))
+
+  interval_list[idx]
 }
 
 .find_breakpoint <- function(fit, interval){
