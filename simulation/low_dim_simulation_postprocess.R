@@ -27,6 +27,8 @@ for(i in 1:10){
   hausdorff_error[4,i] <- median(res_mat[[i+10]][4,], na.rm = T)
 }
 
+png("../figure/low_dimensional_beta.png",
+    height = 1100, width = 2400, res = 300, units = "px"))
 plot(NA, xlim = range(paramMat[1:10,"n"]), ylim = range(beta_error),
      main = "Sum of Beta L2 squared difference",
      xlab = "n", ylab = "Error")
@@ -38,6 +40,7 @@ points(paramMat[1:10,"n"], beta_error[3,], col = "red", pch = 16, cex = 1)
 lines(paramMat[1:10,"n"], beta_error[3,], col = "red", lwd = 2)
 points(paramMat[1:10,"n"], beta_error[4,], col = "red", pch = 16, cex = 1)
 lines(paramMat[1:10,"n"], beta_error[4,], col = "red", lwd = 2, lty = 2)
+graphics.off()
 
 plot(NA, xlim = range(paramMat[1:10,"n"]), ylim = range(hausdorff_error),
      main = "Hausdorff distance", xlab = "n", ylab = "Error")
