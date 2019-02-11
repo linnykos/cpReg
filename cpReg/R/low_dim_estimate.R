@@ -12,7 +12,7 @@ low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
   # search through all possible split points
   for(i in n_seq[-1]){
     idx_i <- which(n_seq == i)
-    if(verbose & idx_i %% floor(length(n_seq)/10) == 0) cat('*')
+    if(verbose & idx_i %% max(floor(length(n_seq)/10),1) == 0) cat('*')
     n_subseq <- n_seq[n_seq < i]
     obj_vec <- rep(NA, length(n_subseq))
     lis <- vector("list", length = length(n_subseq))
@@ -37,6 +37,19 @@ low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
 
   h[[length(h)]]
 }
+
+unravel <- function(fit){
+  mat <- matrix(0, nrow = max(fit$partition), ncol = length(fit$coef_list[[1]]))
+
+  idx <- fit$partition
+  for(i in 1:(length(idx)-1)){
+    mat[(idx[i]+1):idx[i+1],] <- rep(fit$coef_list[[i]], each = idx[i+1]-idx[i])
+  }
+
+  mat
+}
+
+################
 
 .format_sequence <- function(n, delta){
   seq_vec <- seq(0, n, by = delta)
