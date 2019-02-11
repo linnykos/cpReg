@@ -39,7 +39,33 @@ test_that(".find_breakpoint works", {
   expect_true(all(names(res) == c("val", "b")))
 })
 
+test_that(".find_breakpoint works for really small intervals", {
+  fit <- matrix(0, nrow = 200, ncol = 3)
+  fit[1:100,] <- c(rep(1,100), rep(0, 100), rep(1,100))
+  fit[101:200,] <- c(rep(-1,100), rep(0, 100), rep(-1,100))
+  interval <- c(100,102)
+
+  res <- .find_breakpoint(fit, interval)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+  expect_true(all(names(res) == c("val", "b")))
+  expect_true(all(is.na(unlist(res))))
+})
+
 ################
+
+## .remove_duplicate is correct
+
+test_that(".remove_duplicate works", {
+  res <- .remove_duplicate(list(c(0,1), c(0,5), c(0,1)))
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+  expect_true(all(unlist(res) == c(0,1,0,5)))
+})
+
+###################
 
 ## .generate_intervals is correct
 
@@ -79,4 +105,18 @@ test_that(".truncate all lie in the range", {
 
   expect_true(all(sapply(res, function(x){x[1]>=100})))
   expect_true(all(sapply(res, function(x){x[2]<=120})))
+})
+
+################
+
+## screening is correct
+
+test_that("screening works", {
+  fit <- matrix(0, nrow = 200, ncol = 3)
+  fit[1:100,] <- c(rep(1,100), rep(0, 100), rep(1,100))
+  fit[101:200,] <- c(rep(-1,100), rep(0, 100), rep(-1,100))
+
+  res <- screening(fit, tau = 10)
+
+  expect_true(is.numeric(res))
 })

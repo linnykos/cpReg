@@ -1,16 +1,18 @@
-screening <- function(fit, tau, M = 100){
+screening <- function(fit, tau, M = 100, verbose = F){
   # initialize
   n <- nrow(fit)
   random_intervals <- .generate_intervals(n, M)
   q <- dequer::queue()
-  dequer::pushback(q, c(1,n)) #Q: should this be 0 or 1???
+  dequer::pushback(q, c(0,n))
   b_vec <- numeric(0)
+  counter <- 0
 
   # iterate over all intervals recursively
   while(length(q) > 0){
+    if(verbose) print(counter)
     interval <- dequer::pop(q)
     interval_list <- .truncate(interval, random_intervals)
-    res_list <- sapply(interval_list, .find_breakpoint, fit = fit)
+    res_list <- lapply(interval_list, .find_breakpoint, fit = fit)
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
 
     # if passes threshold, recurse
@@ -19,6 +21,8 @@ screening <- function(fit, tau, M = 100){
       dequer::pushback(q, c(interval[1], res$b))
       dequer::pushback(q, c(res$b+1, interval[2]))
     }
+
+    counter <- counter+1
   }
 
   c(0, sort(b_vec), n)
@@ -34,7 +38,7 @@ screening <- function(fit, tau, M = 100){
   })
 
   random_intervals[[M+1]] <- c(1,n)
-  random_intervals
+  .remove_duplicate(random_intervals)
 }
 
 .truncate <- function(interval, random_intervals){
@@ -67,7 +71,7 @@ screening <- function(fit, tau, M = 100){
 .find_breakpoint <- function(fit, interval){
   # check length
   stopifnot(interval[2] > interval[1])
-  if(interval[2] - interval[1] < 3) return(NA)
+  if(interval[2] - interval[1] < 3) return(list(val = NA, b = NA))
 
   vec <- sapply((interval[1]+1):(interval[2]-1), function(x){
     .compute_cusum(fit, interval[1], interval[2], x)
@@ -77,7 +81,6 @@ screening <- function(fit, tau, M = 100){
 }
 
 .compute_cusum <- function(fit, s, e, b){
-  #Q: check to see if anything funny happens w/ s ane e being too short...
   stopifnot(s < b, b < e, s >= 0, e <= nrow(fit))
 
   factor1 <- sqrt((e-b)/((e-s)*(b-s)))
