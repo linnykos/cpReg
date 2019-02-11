@@ -22,7 +22,8 @@ create_coef <- function(vec, full = F){
     mat <- matrix(0, nrow = vec["n"], ncol = vec["d"])
     idx <- round(true_partition*vec["n"])
     for(i in 1:(length(idx)-1)){
-      mat[(idx[i]+1):idx[i+1],] <- rep(lis[[(i %% 2)+1]], each = idx[i+1]-idx[i])
+      zz <- i %% 2; if(zz == 0) zz <- 2
+      mat[(idx[i]+1):idx[i+1],] <- rep(lis[[zz]], each = idx[i+1]-idx[i])
     }
     mat
   }
@@ -36,7 +37,6 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  omega <- min(eigen(stats::cov(dat$X))$value)
   res1 <- unravel(low_dim_estimate(dat$X, dat$y, gamma = 5*log(vec["n"])/(vec["n"]),
                                    delta = max(min(10, vec["n"]/10),3), verbose = F))
   res2 <- SGL_solver(dat$X, dat$y)
