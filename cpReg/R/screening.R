@@ -11,6 +11,7 @@ screening <- function(fit, tau, M = 100, verbose = F){
   while(length(q) > 0){
     if(verbose) print(counter)
     interval <- dequer::pop(q)
+    if(interval[2] - interval[1] < 3) next()
     interval_list <- .truncate(interval, random_intervals)
     res_list <- lapply(interval_list, .find_breakpoint, fit = fit)
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]

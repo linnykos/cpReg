@@ -57,12 +57,12 @@ criterion <- function(dat, vec, y){
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
-# set.seed(1); criterion(rule(paramMat[19,]), paramMat[19,], 1)
+# set.seed(2); criterion(rule(paramMat[4,]), paramMat[4,], 2)
 
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 10,
+                                        paramMat = paramMat, trials = 100,
                                         cores = 2, as_list = T,
                                         filepath = "low_dim_simulation_tmp.RData",
                                         verbose = T)
