@@ -60,9 +60,11 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100){
   if(start == end) return(list(breakpoint = start, cusum = 0))
 
   breakpoint <- seq(from = start, to = end - 1, by = 1)
-  cusum.vec <- sapply(breakpoint, .regression_cusum, y = y, start = start, end = end)
+  cusum.vec <- sapply(breakpoint, .regression_cusum, X = X, y = y,
+                      start = start, end = end,
+                      lambda = lambda)
 
-  idx <- which.max(abs(cusum.vec))
+  idx <- which.max(apply(cusum.vec, 2, .l2norm))
   list(breakpoint = breakpoint[idx], cusum = cusum.vec[idx])
 }
 
@@ -89,7 +91,19 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100){
   names(sort(tree$Get("active")))
 }
 
-.regression_cusum <- function(X, y, lambda){
+.regression_cusum <- function(X, y, start, end, lambda, breakpoint){
+  X1 <- X[start:breakpoint,,drop = F]
+  y1 <- y[start:breakpoint]
+  X2 <- X[(breakpoint+1):end,,drop = F]
+  y2 <- y[(breakpoint+1):end]
+
+  beta1 <- .lasso_regression(X1, y1, lambda)
+  beta2 <- .lasso_regression(X2, y2, lambda)
+
+  sqrt((breakpoint - start)*(end-breakpoint)/(end-start))*(beta1 - beta2)
+}
+
+.lasso_regression <- function(X, y, lambda){
   glmnet_res <- glmnet::glmnet(X, y, intercept = F)
   as.numeric(glmnet::cv.glmnet(glmnet_res, s = lambda))[-1]
 }
