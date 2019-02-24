@@ -1,6 +1,7 @@
 high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
                                        delta = 10){
-  n <- length(y); tree <- .create_node(1, n)
+  n <- length(y); tree <- .create_node(0, n)
+  random_intervals <- .generate_intervals(n, M)
   cp <- c()
   steps <- 1
 
@@ -10,7 +11,7 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
       leaf <- data.tree::FindNode(tree, leaves.names[i])
 
       if(is.na(leaf$breakpoint) & leaf$end - leaf$start > 2*delta){
-        res <- .find_breakpoint2(X, y, lambda, leaf$start, leaf$end,
+        res <- .find_regression_breakpoint(X, y, lambda, leaf$start, leaf$end,
                                  delta)
 
         leaf$breakpoint <- res$breakpoint; leaf$cusum <- res$cusum
@@ -81,14 +82,14 @@ is_valid.Node <- function(obj){
 }
 
 
-.find_breakpoint2 <- function(X, y, lambda, start, end, delta){
+.find_regression_breakpoint <- function(X, y, lambda, start, end, delta){
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
   stopifnot(end - start > 2*delta)
 
   breakpoint <- seq(from = start + delta, to = end - 1 - delta, by = 1)
   cusum_vec <- sapply(breakpoint, function(x){
-    .regression_cusum(X = X, y = y, start = start, end = end,
+    .compute_regression_cusum(X = X, y = y, start = start, end = end,
                       lambda = lambda, breakpoint = x)})
 
   cusum_vec <- apply(cusum_vec, 2, .l2norm)
@@ -120,9 +121,9 @@ is_valid.Node <- function(obj){
   names(sort(tree$Get("active")))
 }
 
-.regression_cusum <- function(X, y, start, end, lambda, breakpoint){
-  X1 <- X[start:breakpoint,,drop = F]
-  y1 <- y[start:breakpoint]
+.compute_regression_cusum <- function(X, y, start, end, lambda, breakpoint){
+  X1 <- X[(start+1):breakpoint,,drop = F]
+  y1 <- y[(start+1):breakpoint]
   X2 <- X[(breakpoint+1):end,,drop = F]
   y2 <- y[(breakpoint+1):end]
 
