@@ -1,33 +1,36 @@
-high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100){
+high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
+                                       delta = 10){
   n <- length(y); tree <- .create_node(1, n)
   cp <- c()
+  steps <- 1
 
-  for(steps in 1:numSteps){
+  while(TRUE){
     leaves.names <- .get_leaves_names(tree)
     for(i in 1:length(leaves.names)){
       leaf <- data.tree::FindNode(tree, leaves.names[i])
 
-      res <- .find_breakpoint(y, leaf$start, leaf$end)
+      if(is.na(leaf$breakpoint) & leaf$end - leaf$start > 2*delta){
+        res <- .find_breakpoint2(X, y, lambda, leaf$start, leaf$end,
+                                 delta)
 
-      leaf$breakpoint <- res$breakpoint; leaf$cusum <- res$cusum
+        leaf$breakpoint <- res$breakpoint; leaf$cusum <- res$cusum
+      }
     }
 
     node.name <- .find_leadingBreakpoint(tree)
+    if(length(node.name) == 0) break()
     node.selected <- data.tree::FindNode(tree, node.name)
+
+    if(node.selected$cusum < tau) break()
+
     node.selected$active <- steps
+    steps <- steps + 1
     node.pairs <- .split_node(node.selected)
     node.selected$AddChildNode(node.pairs$left)
     node.selected$AddChildNode(node.pairs$right)
   }
 
-  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps), class = "bsFs")
-  cp <- jumps(obj)
-  leaves <- .enumerate_splits(tree)
-  cp.sign <- sign(as.numeric(sapply(leaves, function(x){
-    data.tree::FindNode(tree, x)$cusum})))
-  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp,
-                        cp.sign=cp.sign, y=y), class = "bsFs")
-
+  structure(list(tree = tree, numSteps = steps), class = "HDF")
 }
 
 #########
@@ -78,18 +81,20 @@ is_valid.Node <- function(obj){
 }
 
 
-.find_breakpoint <- function(X, y, lambda, start, end){
-  ## stopifnot(!any(duplicated(y)))
+.find_breakpoint2 <- function(X, y, lambda, start, end, delta){
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
+  stopifnot(end - start > 2*delta)
 
-  breakpoint <- seq(from = start, to = end - 1, by = 1)
-  cusum.vec <- sapply(breakpoint, .regression_cusum, X = X, y = y,
-                      start = start, end = end,
-                      lambda = lambda)
+  breakpoint <- seq(from = start + delta, to = end - 1 - delta, by = 1)
+  cusum_vec <- sapply(breakpoint, function(x){
+    .regression_cusum(X = X, y = y, start = start, end = end,
+                      lambda = lambda, breakpoint = x)})
 
-  idx <- which.max(apply(cusum.vec, 2, .l2norm))
-  list(breakpoint = breakpoint[idx], cusum = cusum.vec[idx])
+  cusum_vec <- apply(cusum_vec, 2, .l2norm)
+
+  idx <- which.max(cusum_vec)
+  list(breakpoint = breakpoint[idx], cusum = cusum_vec[idx])
 }
 
 .find_leadingBreakpoint <- function(tree){
