@@ -7,4 +7,5 @@ dat <- create_data(list(beta1, beta2, beta1),
                    round(c(0,0.25,0.75,1)*n),
                    cov_type = "identity")
 
-res <- high_dim_feasible_estimate(dat$X, dat$y, lambda = 1, tau = 30)
+res <- high_dim_feasible_estimate(dat$X, dat$y, lambda = 1, tau = 30,
+                                  verbose = T)

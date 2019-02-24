@@ -1,7 +1,7 @@
 wbs <- function(data,
                 data_length_func,
                 compute_cusum_func,
-                tau, M = 100,
+                tau, M = 100, delta = 1,
                 verbose = F, ...){
   # initialize
   n <- data_length_func(data)
@@ -15,16 +15,17 @@ wbs <- function(data,
   while(length(q) > 0){
     if(verbose) print(counter)
     interval <- dequer::pop(q)
-    if(interval[2] - interval[1] < 3) next()
+    if(interval[2] - interval[1] < 2*delta+1) next()
     interval_list <- .truncate(interval, random_intervals)
     res_list <- lapply(interval_list, function(x){
-      .find_breakpoint(data = data, interval = x,
+      .find_breakpoint(data = data, interval = x, delta = delta,
                        compute_cusum_func = compute_cusum_func, ...)})
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
 
     # if passes threshold, recurse
     if(res$val >= tau){
       b_vec <- c(b_vec, res$b)
+      print(paste0("Pushing ", interval[1], " - ", res$b, " - ", interval[2]))
       dequer::pushback(q, c(interval[1], res$b))
       dequer::pushback(q, c(res$b+1, interval[2]))
     }
@@ -75,14 +76,16 @@ wbs <- function(data,
   interval_list[idx]
 }
 
-.find_breakpoint <- function(data, interval, compute_cusum_func, ...){
+.find_breakpoint <- function(data, interval, delta, compute_cusum_func, ...){
   # check length
   stopifnot(interval[2] > interval[1])
-  if(interval[2] - interval[1] < 3) return(list(val = NA, b = NA))
+  if(interval[2] - interval[1] < 2*delta+1) return(list(val = NA, b = NA))
 
-  vec <- sapply((interval[1]+1):(interval[2]-1), function(x){
+  vec <- sapply((interval[1]+delta):(interval[2]-1-delta), function(x){
     compute_cusum_func(data, interval[1], interval[2], x, ...)
   })
 
-  list(val = max(vec), b = which.max(vec)+interval[1])
+  print(paste0(interval[1], " - ", which.max(vec)+interval[1]+delta-1, " - ", interval[2]))
+
+  list(val = max(vec), b = which.max(vec)+interval[1]+delta-1)
 }

@@ -1,7 +1,7 @@
-screening <- function(fit, tau, M = 100, verbose = F){
+screening <- function(fit, tau, M = 100, delta = 1, verbose = F){
   wbs(fit, data_length_func = nrow,
       compute_cusum_func = .compute_cusum,
-      tau = tau, M = M, verbose = verbose)
+      tau = tau, M = M, delta = delta, verbose = verbose)
 }
 
 hausdorff <- function(set1, set2, one.sided = FALSE){
