@@ -7,6 +7,45 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
       lambda = lambda)
 }
 
+oracle_tune_lambda <- function(X, y, partition){
+  stopifnot(partition[1] == 0, partition[length(partition)] == 1)
+
+  n <- nrow(X)
+  k <- length(partition)-1
+  partition_idx <- round(partition*n)
+
+  median(sapply(1:k, function(x){
+    fit <- glmnet::cv.glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
+                      y[(partition_idx[x]+1):partition_idx[x+1]],
+                      intercept = F, grouped = F)
+    fit$lambda.1se
+  }))
+}
+
+oracle_tune_tau <- function(X, y, partition, lambda, factor = 3/4){
+  stopifnot(partition[1] == 0, partition[length(partition)] == 1)
+
+  n <- nrow(X)
+  k <- length(partition)-1
+  partition_idx <- round(partition*n)
+
+  coef_list <- lapply(1:k, function(x){
+    fit <- glmnet::glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
+                             y[(partition_idx[x]+1):partition_idx[x+1]],
+                             intercept = F)
+    glmnet::coef.glmnet(fit, s = lambda)[-1]
+  })
+
+  res <- min(sapply(1:(k-1), function(x){
+    s <- partition_idx[x]
+    b <- partition_idx[x+1]
+    e <- partition_idx[x+2]
+    .l2norm(sqrt((b - s)*(e-b)/(e-s))*(coef_list[[x]] - coef_list[[x+1]]))
+  }))
+
+  res*factor
+}
+
 #########
 
 .compute_regression_cusum <- function(data, start, end, breakpoint, lambda){
