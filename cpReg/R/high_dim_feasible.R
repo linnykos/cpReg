@@ -12,7 +12,7 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
 
       if(is.na(leaf$breakpoint) & leaf$end - leaf$start > 2*delta){
         res <- .find_regression_breakpoint(X, y, lambda, leaf$start, leaf$end,
-                                 delta)
+                                 random_intervals, delta)
 
         leaf$breakpoint <- res$breakpoint; leaf$cusum <- res$cusum
       }
@@ -82,7 +82,8 @@ is_valid.Node <- function(obj){
 }
 
 
-.find_regression_breakpoint <- function(X, y, lambda, start, end, delta){
+.find_regression_breakpoint <- function(X, y, lambda, start, end, random_intervals,
+                                        delta){
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
   stopifnot(end - start > 2*delta)
