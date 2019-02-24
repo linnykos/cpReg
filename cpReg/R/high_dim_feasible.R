@@ -32,6 +32,30 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100){
 
 #########
 
+#' Checks S3 object validity
+#'
+#' Generic function that fails noisily with a stop message if the object is
+#' invalid. Otherwise, nothing happens.
+#'
+#' @param  obj  The object to check
+#' @return void
+#' @export
+is_valid <- function(obj) UseMethod("is_valid")
+
+#' Check whether tree is valid or not
+#'
+#' @param obj The tree (of class Node)
+#'
+#' @return TRUE if valid
+#' @export
+is_valid.Node <- function(obj){
+  if(obj$start > obj$end) stop("the start must be less or equal to end")
+  if(!is.na(obj$breakpoint) & (obj$start > obj$breakpoint & obj$end < obj$breakpoint))
+    stop("breakpoint must be between start and end (inclusive)")
+
+  TRUE
+}
+
 .create_node <- function(start, end, breakpoint = NA, cusum = NA, active = NA){
   node <- data.tree::Node$new(paste0(start, "-", end))
 
@@ -105,6 +129,6 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100){
 
 .lasso_regression <- function(X, y, lambda){
   glmnet_res <- glmnet::glmnet(X, y, intercept = F)
-  as.numeric(glmnet::cv.glmnet(glmnet_res, s = lambda))[-1]
+  as.numeric(glmnet::coef.glmnet(glmnet_res, s = lambda))[-1]
 }
 
