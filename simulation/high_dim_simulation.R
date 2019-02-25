@@ -61,6 +61,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = 100,
                                         cores = 15, as_list = T,
-                                        filepath = "../results/low_dim_simulation_tmp.RData",
+                                        filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)
-save.image("../results/low_dim_simulation.RData")
+save.image("../results/high_dim_simulation.RData")
