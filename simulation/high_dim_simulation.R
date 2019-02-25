@@ -20,7 +20,7 @@ create_coef <- function(vec, full = F){
   if(!full){
     lis
   } else {
-    mat <- matrix(0, nrow = vec["n"], ncol = vec["d"])
+    mat <- matrix(0, nrow = vec["n"], ncol = vec["d/n"]*vec["n"])
     idx <- round(true_partition*vec["n"])
     for(i in 1:(length(idx)-1)){
       zz <- i %% 2; if(zz == 0) zz <- 2
