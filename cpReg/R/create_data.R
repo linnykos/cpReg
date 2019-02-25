@@ -1,3 +1,11 @@
+#' Create data
+#'
+#' @param coef_list list of numerics
+#' @param partition vector
+#' @param cov_type character
+#'
+#' @return list containing \code{X} and code{y}
+#' @export
 create_data <- function(coef_list, partition, cov_type = "identity"){
   stopifnot(length(partition) == length(coef_list)+1, partition[1] == 0)
   stopifnot(length(unique(sapply(coef_list, length))) == 1)
