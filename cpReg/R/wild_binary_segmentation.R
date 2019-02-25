@@ -19,7 +19,8 @@ wbs <- function(data,
     interval_list <- .truncate(interval, random_intervals)
     res_list <- lapply(interval_list, function(x){
       .find_breakpoint(data = data, interval = x, delta = delta,
-                       compute_cusum_func = compute_cusum_func, ...)})
+                       compute_cusum_func = compute_cusum_func,
+                       verbose = verbose, ...)})
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
 
     # if passes threshold, recurse
@@ -76,7 +77,8 @@ wbs <- function(data,
   interval_list[idx]
 }
 
-.find_breakpoint <- function(data, interval, delta, compute_cusum_func, ...){
+.find_breakpoint <- function(data, interval, delta = 1, compute_cusum_func,
+                             verbose = F, ...){
   # check length
   stopifnot(interval[2] > interval[1])
   if(interval[2] - interval[1] < 2*delta+1) return(list(val = NA, b = NA))
@@ -85,7 +87,7 @@ wbs <- function(data,
     compute_cusum_func(data, interval[1], interval[2], x, ...)
   })
 
-  print(paste0(interval[1], " - ", which.max(vec)+interval[1]+delta-1, " - ", interval[2]))
+  if(verbose) print(paste0(interval[1], " - ", which.max(vec)+interval[1]+delta-1, " - ", interval[2]))
 
   list(val = max(vec), b = which.max(vec)+interval[1]+delta-1)
 }

@@ -1,4 +1,14 @@
-low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
+#' Low dimensional estimator
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param gamma numeric
+#' @param delta numeric
+#' @param verbose boolean
+#'
+#' @return list containing \code{obj_val}, \code{partition}, \code{coef_list}
+#' @export
+low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = F){
   # create list of results to store DP
   n <- nrow(X); d <- ncol(X)
   gamma2 <- gamma*n
@@ -38,6 +48,12 @@ low_dim_estimate <- function(X, y, gamma, delta = 5, verbose = T){
   h[[length(h)]]
 }
 
+#' Unravel estimate into matrix
+#'
+#' @param fit object from one of the estimation functions
+#'
+#' @return \code{n} by \code{d} matrix
+#' @export
 unravel <- function(fit){
   mat <- matrix(0, nrow = max(fit$partition), ncol = length(fit$coef_list[[1]]))
 

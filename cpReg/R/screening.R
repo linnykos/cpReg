@@ -1,9 +1,27 @@
+#' Screening
+#'
+#' @param fit object from estimator
+#' @param tau numeric
+#' @param M numeric
+#' @param delta numeric
+#' @param verbose boolean
+#'
+#' @return numeric
+#' @export
 screening <- function(fit, tau, M = 100, delta = 1, verbose = F){
   wbs(fit, data_length_func = nrow,
       compute_cusum_func = .compute_cusum,
       tau = tau, M = M, delta = delta, verbose = verbose)
 }
 
+#' Hausdorff distance
+#'
+#' @param set1 numeric
+#' @param set2 numeric
+#' @param one.sided boolean
+#'
+#' @return numeric
+#' @export
 hausdorff <- function(set1, set2, one.sided = FALSE){
   #handle corner cases
   if(length(set1) == 0 | length(set2) == 0) return(NA)

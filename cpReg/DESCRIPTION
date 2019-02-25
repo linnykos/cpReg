@@ -10,7 +10,8 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     glmnet,
-    dequer
+    dequer,
+    MASS
 Suggests:
     testthat
 RoxygenNote: 6.1.1

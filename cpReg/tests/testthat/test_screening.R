@@ -32,7 +32,7 @@ test_that(".find_breakpoint works", {
   fit[101:200,] <- c(rep(-1,100), rep(0, 100), rep(-1,100))
   interval <- c(0, 200)
 
-  res <- .find_breakpoint(fit, interval)
+  res <- .find_breakpoint(fit, interval, compute_cusum_func = .compute_cusum)
 
   expect_true(is.list(res))
   expect_true(length(res) == 2)
