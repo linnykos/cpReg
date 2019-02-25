@@ -46,7 +46,7 @@ criterion <- function(dat, vec, y){
   beta_mat <- cpReg::unravel(res)
   true_beta <- create_coef(vec, full = T)
 
-  beta_error <- sum(sapply(1:vec["n"], function(x){.l2norm(beta_mat[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_error <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat[x,] - true_beta[x,])^2}))/vec["n"]
   haus <- cpReg::hausdorff(res$partition, round(true_partition*vec["n"]))
 
   list(beta_error = beta_error, haus = haus, partition = res$partition,
