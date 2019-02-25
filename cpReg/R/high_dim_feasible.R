@@ -1,10 +1,13 @@
 high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
                                        delta = 10, verbose = F){
   data <- list(X = X, y = y)
-  wbs(data, data_length_func = function(x){nrow(x$X)},
+  partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
       compute_cusum_func = .compute_regression_cusum,
       tau = tau, M = M, delta = delta, verbose = verbose,
       lambda = lambda)
+
+  n <- nrow(X)
+  list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))
 }
 
 oracle_tune_lambda <- function(X, y, partition){
@@ -22,19 +25,11 @@ oracle_tune_lambda <- function(X, y, partition){
   }))
 }
 
-oracle_tune_tau <- function(X, y, partition, lambda, factor = 3/4){
-  stopifnot(partition[1] == 0, partition[length(partition)] == 1)
-
+oracle_tune_tau <- function(X, y, lambda, partition, factor = 3/4){
+  coef_list <- .refit_high_dim(X, y, lambda, partition)
   n <- nrow(X)
-  k <- length(partition)-1
   partition_idx <- round(partition*n)
-
-  coef_list <- lapply(1:k, function(x){
-    fit <- glmnet::glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
-                             y[(partition_idx[x]+1):partition_idx[x+1]],
-                             intercept = F)
-    glmnet::coef.glmnet(fit, s = lambda)[-1]
-  })
+  k <- length(coef_list)
 
   res <- min(sapply(1:(k-1), function(x){
     s <- partition_idx[x]
@@ -63,5 +58,20 @@ oracle_tune_tau <- function(X, y, partition, lambda, factor = 3/4){
 .lasso_regression <- function(X, y, lambda){
   glmnet_res <- glmnet::glmnet(X, y, intercept = F)
   as.numeric(glmnet::coef.glmnet(glmnet_res, s = lambda))[-1]
+}
+
+.refit_high_dim <- function(X, y, lambda, partition){
+  stopifnot(partition[1] == 0, partition[length(partition)] == 1)
+
+  n <- nrow(X)
+  k <- length(partition)-1
+  partition_idx <- round(partition*n)
+
+  lapply(1:k, function(x){
+    fit <- glmnet::glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
+                          y[(partition_idx[x]+1):partition_idx[x+1]],
+                          intercept = F)
+    glmnet::coef.glmnet(fit, s = lambda)[-1]
+  })
 }
 

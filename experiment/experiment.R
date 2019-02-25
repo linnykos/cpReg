@@ -9,7 +9,7 @@ dat <- create_data(list(beta1, beta2, beta1),
                    cov_type = "identity")
 
 lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
-tau <- oracle_tune_tau(dat$X, dat$y, true_partition, lambda)
+tau <- oracle_tune_tau(dat$X, dat$y, lambda, true_partition)
 
 res <- high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                   verbose = T)
