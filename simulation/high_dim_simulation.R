@@ -59,7 +59,7 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 100,
+                                        paramMat = paramMat, trials = 10,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)
