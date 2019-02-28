@@ -12,10 +12,14 @@
 #' @export
 high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
                                        delta = 10, verbose = F){
+  tau_function <- function(data, interval, ...){
+    tau
+  }
+
   data <- list(X = X, y = y)
   partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
       compute_cusum_func = .compute_regression_cusum,
-      tau = tau, M = M, delta = delta, verbose = verbose,
+      tau_function = tau_function, M = M, delta = delta, verbose = verbose,
       lambda = lambda)
 
   n <- nrow(X)

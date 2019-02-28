@@ -9,9 +9,13 @@
 #' @return numeric
 #' @export
 screening <- function(fit, tau, M = 100, delta = 1, verbose = F){
+  tau_function <- function(data, interval, ...){
+    tau
+  }
+
   wbs(fit, data_length_func = nrow,
       compute_cusum_func = .compute_cusum,
-      tau = tau, M = M, delta = delta, verbose = verbose)
+      tau_function = tau_function, M = M, delta = delta, verbose = verbose)
 }
 
 #' Hausdorff distance

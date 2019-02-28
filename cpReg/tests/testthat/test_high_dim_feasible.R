@@ -43,3 +43,16 @@ test_that(".compute_regression_cusum is maximized appropriately", {
   expect_true(abs(which.max(res1) - 45) < abs(which.max(res2) - 45))
   expect_true(abs(which.max(res2) - 70) < abs(which.max(res1) - 70))
 })
+
+############
+
+## high_dim_feasible_estimate is correct
+
+test_that("high_dim_feasible_estimate works" ,{
+  set.seed(10)
+  dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
+  res <- high_dim_feasible_estimate(dat$X, dat$y, 0.1, 40, M = 1)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+})

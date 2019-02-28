@@ -1,7 +1,7 @@
 wbs <- function(data,
                 data_length_func,
                 compute_cusum_func,
-                tau, M = 100, delta = 1,
+                tau_function, M = 100, delta = 1,
                 verbose = F, ...){
   # initialize
   n <- data_length_func(data)
@@ -24,9 +24,9 @@ wbs <- function(data,
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
 
     # if passes threshold, recurse
-    if(res$val >= tau){
+    if(res$val >= tau_function(data = data, interval = interval, ...)){
       b_vec <- c(b_vec, res$b)
-      print(paste0("Pushing ", interval[1], " - ", res$b, " - ", interval[2]))
+      if(verbose) print(paste0("Pushing ", interval[1], " - ", res$b, " - ", interval[2]))
       dequer::pushback(q, c(interval[1], res$b))
       dequer::pushback(q, c(res$b+1, interval[2]))
     }
@@ -40,11 +40,15 @@ wbs <- function(data,
 ################
 
 .generate_intervals <- function(n, M){
-  stopifnot(n >= 2)
+  stopifnot(n >= 2, M >= 0, M %% 1 == 0)
 
-  random_intervals <- lapply(1:M, function(x){
-    sort(sample(1:n, 2, replace = F))
-  })
+  if(M > 0){
+    random_intervals <- lapply(1:M, function(x){
+      sort(sample(1:n, 2, replace = F))
+    })
+  } else {
+    random_intervals <- list()
+  }
 
   random_intervals[[M+1]] <- c(1,n)
   .remove_duplicate(random_intervals)
