@@ -11,6 +11,30 @@ high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))
 }
 
+oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
+  coef_list <- .refit_high_dim(X, y, lambda, partition)
+  n <- nrow(X)
+  partition_idx <- round(partition*n)
+  k <- length(coef_list)
+
+  res <- min(sapply(1:(k-1), function(x){
+    idx1 <- (partition_idx[x]+1):partition_idx[x+1]
+    idx2 <- (partition_idx[x+1]+1):partition_idx[x+2]
+
+    fit <- glmnet::glmnet(X[c(idx1, idx2),,drop = F], y[c(idx1, idx2)],
+                          intercept = F)
+    alternative_coef <- glmnet::coef.glmnet(fit, s = lambda*sqrt(length(c(idx1,idx2))))[-1]
+    loss <- as.numeric(.l2norm(X[c(idx1, idx2),,drop=F]%*%alternative_coef - y[c(idx1, idx2)])^2)/n
+
+    loss1 <- as.numeric(.l2norm(X[idx1,,drop=F]%*%coef_list[[x]] - y[idx1])^2)/n
+    loss2 <- as.numeric(.l2norm(X[idx2,,drop=F]%*%coef_list[[x+1]] - y[idx2])^2)/n
+
+    loss - (loss1+loss2)
+  }))
+
+  res*factor
+}
+
 ##################
 
 .compute_regression_buhlmann <- function(data, start, end, breakpoint, lambda, gamma){
