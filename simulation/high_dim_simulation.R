@@ -2,7 +2,7 @@ rm(list=ls())
 library(simulation)
 library(cpReg)
 
-paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
+paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(500), length.out = 10))), c(1,2),
                                   1/2))
 colnames(paramMat) <- c("n", "X_type", "d/n")
 
@@ -40,17 +40,28 @@ rule <- function(vec){
 criterion <- function(dat, vec, y){
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition)
+  gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition)
 
-  res <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
+  res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                     verbose = F)
-  beta_mat <- cpReg::unravel(res)
+  res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
+                                            verbose = F)
+
   true_beta <- create_coef(vec, full = T)
 
-  beta_error <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat[x,] - true_beta[x,])^2}))/vec["n"]
-  haus <- cpReg::hausdorff(res$partition, round(true_partition*vec["n"]))
+  beta_mat1 <- cpReg::unravel(res1)
+  beta_mat2 <- cpReg::unravel(res2)
 
-  list(beta_error = beta_error, haus = haus, partition = res$partition,
-       lambda = lambda, tau = tau)
+  beta_error1 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat1[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_error2 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2[x,] - true_beta[x,])^2}))/vec["n"]
+
+  haus1 <- cpReg::hausdorff(res1$partition, round(true_partition*vec["n"]))
+  haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*vec["n"]))
+
+  list(beta_error1 = beta_error1, beta_error2 = beta_error2,
+       haus1 = haus1, haus2 = haus2,
+       partition1 = res1$partition, partition2 = res2$partition,
+       lambda = lambda, tau = tau, gamma = gamma)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
@@ -59,7 +70,7 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 10,
+                                        paramMat = paramMat, trials = 20,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)

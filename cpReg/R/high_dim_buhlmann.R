@@ -1,3 +1,14 @@
+#' High dimensional estimator - Buhlmann
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param gamma numeric
+#' @param delta numeric
+#' @param verbose boolean
+#'
+#' @return list containing \code{partition} and \code{coef_list}
+#' @export
 high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
                                        delta = 10, verbose = F){
   data <- list(X = X, y = y)
@@ -11,6 +22,16 @@ high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))
 }
 
+#' Tune gamma (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param partition vector with values between 0 and 1
+#' @param factor numeric
+#'
+#' @return numeric
+#' @export
 oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
   coef_list <- .refit_high_dim(X, y, lambda, partition)
   n <- nrow(X)
