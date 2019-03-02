@@ -10,12 +10,14 @@
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
 high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
-                                       delta = 10, verbose = F){
+                                       delta = 10, max_candidates = 10,
+                                       verbose = F){
   data <- list(X = X, y = y)
   partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
                    compute_cusum_func = .compute_regression_buhlmann,
                    tau_function = .buhlmann_threshold,
-                   M = 0, delta = delta, verbose = verbose,
+                   M = 0, delta = delta, max_candidates = 10,
+                   verbose = verbose,
                    lambda = lambda, gamma = gamma)
 
   n <- nrow(X)

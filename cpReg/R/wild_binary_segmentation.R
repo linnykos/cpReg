@@ -2,6 +2,7 @@ wbs <- function(data,
                 data_length_func,
                 compute_cusum_func,
                 tau_function, M = 100, delta = 1,
+                max_candidates = data_length_func(data),
                 verbose = F, ...){
   # initialize
   n <- data_length_func(data)
@@ -19,6 +20,7 @@ wbs <- function(data,
     interval_list <- .truncate(interval, random_intervals)
     res_list <- lapply(interval_list, function(x){
       .find_breakpoint(data = data, interval = x, delta = delta,
+                       max_candidates = max_candidates,
                        compute_cusum_func = compute_cusum_func,
                        verbose = verbose, ...)})
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
@@ -81,13 +83,20 @@ wbs <- function(data,
   interval_list[idx]
 }
 
-.find_breakpoint <- function(data, interval, delta = 1, compute_cusum_func,
+.find_breakpoint <- function(data, interval, delta = 1,
+                             max_candidates = 10,
+                             compute_cusum_func,
                              verbose = F, ...){
   # check length
   stopifnot(interval[2] > interval[1])
   if(interval[2] - interval[1] < 2*delta+1) return(list(val = NA, b = NA))
 
-  vec <- sapply((interval[1]+delta):(interval[2]-1-delta), function(x){
+  seq_vec <- (interval[1]+delta):(interval[2]-1-delta)
+  if(length(seq_vec) > max_candidates){
+    seq_vec <- seq_vec[seq(1, length(seq_vec), max_candidates)]
+  }
+
+  vec <- sapply(seq_vec, function(x){
     compute_cusum_func(data, interval[1], interval[2], x, ...)
   })
 

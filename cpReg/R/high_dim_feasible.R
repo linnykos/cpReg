@@ -6,12 +6,14 @@
 #' @param tau numeric
 #' @param M numeric
 #' @param delta numeric
+#' @param max_candidates numeric
 #' @param verbose boolean
 #'
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
 high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
-                                       delta = 10, verbose = F){
+                                       delta = 10, max_candidates = 10,
+                                       verbose = F){
   tau_function <- function(data, interval, ...){
     tau
   }
@@ -19,8 +21,8 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
   data <- list(X = X, y = y)
   partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
       compute_cusum_func = .compute_regression_cusum,
-      tau_function = tau_function, M = M, delta = delta, verbose = verbose,
-      lambda = lambda)
+      tau_function = tau_function, M = M, delta = delta, max_candidates = max_candidates,
+      verbose = verbose, lambda = lambda)
 
   n <- nrow(X)
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))

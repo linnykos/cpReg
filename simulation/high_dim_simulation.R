@@ -40,7 +40,8 @@ rule <- function(vec){
 criterion <- function(dat, vec, y){
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition)
-  gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition)
+  gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
+                                    factor = 3/8)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                     verbose = F)
