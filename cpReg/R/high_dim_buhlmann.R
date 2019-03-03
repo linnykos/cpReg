@@ -10,7 +10,7 @@
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
 high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
-                                       delta = 10, max_candidates = 10,
+                                       delta = 10, max_candidates = 50,
                                        verbose = F){
   data <- list(X = X, y = y)
   partition <- wbs(data, data_length_func = function(x){nrow(x$X)},

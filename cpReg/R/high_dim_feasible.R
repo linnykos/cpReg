@@ -12,7 +12,7 @@
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
 high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
-                                       delta = 10, max_candidates = 10,
+                                       delta = 10, max_candidates = 50,
                                        verbose = F){
   tau_function <- function(data, interval, ...){
     tau

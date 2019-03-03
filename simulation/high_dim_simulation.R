@@ -2,7 +2,7 @@ rm(list=ls())
 library(simulation)
 library(cpReg)
 
-paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(500), length.out = 10))), c(1,2),
+paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(300), length.out = 10))), c(1,2),
                                   1/2))
 colnames(paramMat) <- c("n", "X_type", "d/n")
 
@@ -41,7 +41,7 @@ criterion <- function(dat, vec, y){
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition)
   gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
-                                    factor = 3/8)
+                                    factor = 3/4)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                     verbose = F)

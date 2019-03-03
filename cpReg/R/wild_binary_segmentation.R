@@ -84,7 +84,7 @@ wbs <- function(data,
 }
 
 .find_breakpoint <- function(data, interval, delta = 1,
-                             max_candidates = 10,
+                             max_candidates = 50,
                              compute_cusum_func,
                              verbose = F, ...){
   # check length
@@ -92,8 +92,10 @@ wbs <- function(data,
   if(interval[2] - interval[1] < 2*delta+1) return(list(val = NA, b = NA))
 
   seq_vec <- (interval[1]+delta):(interval[2]-1-delta)
+
+  # if too many candidates, cut in half
   if(length(seq_vec) > max_candidates){
-    seq_vec <- seq_vec[seq(1, length(seq_vec), max_candidates)]
+    seq_vec <- seq_vec[seq(1, length(seq_vec), by = 2)]
   }
 
   vec <- sapply(seq_vec, function(x){
