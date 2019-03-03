@@ -50,7 +50,7 @@ oracle_tune_grouplambda <- function(X, y, partition){
 .enumerate_possibilites <- function(n, K, delta = 10){
   stopifnot(delta < n)
   seq_vec <- seq(delta, n-delta, by = delta)
-  rbind(0, combn(seq_vec, K), n)
+  rbind(0, utils::combn(seq_vec, K), n)
 }
 
 .high_dim_infeasible_subroutine <- function(X, y, lambda, maxl2, partition){
