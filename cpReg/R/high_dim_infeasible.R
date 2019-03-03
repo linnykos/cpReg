@@ -1,15 +1,29 @@
-high_dim_feasible_estimate <- function(X, y, lambda, tau, verbose = F){
+high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
+                                         delta = 10, verbose = F){
+  n <- nrow(X)
+  combn_mat <- .enumerate_possibilites(n, K, delta)
+  res_list <- lapply(1:ncol(combn_mat), function(x){
+    .high_dim_infeasible_subroutine(X, y, lambda, maxl2, combn_mat[,x])
+  })
 
+  idx <- which.min(sapply(res_list, function(x){x$obj_val}))
+
+  list(partition = combn_mat[,idx], coef_list = res_list[[idx]]$coef_list)
 }
 
 ##################
 
-.high_dim_feasible_subroutine <- function(X, y, lambda, maxl2, partition){
-  stopifnot(partition[1] == 0, partition[length(partition)] == 1)
+.enumerate_possibilites <- function(n, K, delta = 10){
+  stopifnot(delta < n)
+  seq_vec <- seq(delta, n-delta, by = delta)
+  rbind(0, combn(seq_vec, K), n)
+}
+
+.high_dim_infeasible_subroutine <- function(X, y, lambda, maxl2, partition){
+  stopifnot(partition[1] == 0, partition[length(partition)] == nrow(X))
 
   n <- nrow(X); d <- ncol(X); k <- length(partition)-1
-  partition_idx <- round(partition*n)
-  X_new <- .reformat_covariates(X, partition_idx)
+  X_new <- .reformat_covariates(X, partition)
   group_vec <- rep(1:d, times = k)
   fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
                         group.multiplier = rep(1, d))
@@ -20,8 +34,8 @@ high_dim_feasible_estimate <- function(X, y, lambda, tau, verbose = F){
   beta_list <- vector("list", k)
   for(i in 1:k){
     idx <- (partition[i]+1):partition[i+1]
-    beta_mat[idx,] <- coef_vec[(d*(i-1)+1):(d*i)]/sqrt(length(idx))
-    beta_list[[i]] <- beta_mat[idx,]
+    beta_list[[i]] <- coef_vec[(d*(i-1)+1):(d*i)]/sqrt(length(idx))
+    beta_mat[idx,] <- t(sapply(1:length(idx), function(x){beta_list[[i]]}))
   }
 
   # check that the l2norm constraint is met

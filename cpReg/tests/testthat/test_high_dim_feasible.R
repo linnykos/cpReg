@@ -56,3 +56,34 @@ test_that("high_dim_feasible_estimate works" ,{
   expect_true(is.list(res))
   expect_true(length(res) == 2)
 })
+
+################
+
+## oracle_tune_lambda is correct
+
+test_that("oracle_tune_lambda works" ,{
+  set.seed(10)
+  dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
+  lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, c(0,0.5,1))
+
+  expect_true(is.numeric(lambda))
+  expect_true(lambda > 0)
+})
+
+#################
+
+## oracle_tune_tau is correct
+
+test_that("oracle_tune_tau works",{
+  set.seed(20)
+  dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
+  lambda <- oracle_tune_lambda(dat$X, dat$y, c(0,0.5,1))
+  tau <- oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
+                         factor = 7/8)
+
+  expect_true(is.numeric(tau))
+  expect_true(tau > 0)
+})
+
+
+
