@@ -1,3 +1,15 @@
+#' High dimesional infeasible estimator
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param maxl2 numeric
+#' @param K numeric
+#' @param delta numeric (minimal spacing between the points to be brute searched over)
+#' @param verbose boolean
+#'
+#' @return list containing \code{partition} and \code{coef_list}
+#' @export
 high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
                                          delta = 10, verbose = F){
   n <- nrow(X)
@@ -8,8 +20,22 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
 
   idx <- which.min(sapply(res_list, function(x){x$obj_val}))
 
-  list(partition = combn_mat[,idx], coef_list = res_list[[idx]]$coef_list)
+  list(partition = as.numeric(combn_mat[,idx]), coef_list = res_list[[idx]]$coef_list)
 }
+
+oracle_tune_grouplambda <- function(X, y, partition){
+  n <- nrow(X); d <- ncol(X); k <- length(partition)-1
+  partition_idx <- round(partition*n)
+
+  X_new <- .reformat_covariates(X, partition_idx)
+  group_vec <- rep(1:d, times = k)
+
+  fit <- grpreg::cv.grpreg(X_new, y, group = group_vec, penalty = "grLasso",
+                        group.multiplier = rep(1, d))
+
+  .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
+}
+
 
 ##################
 
@@ -27,7 +53,7 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
   group_vec <- rep(1:d, times = k)
   fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
                         group.multiplier = rep(1, d))
-  coef_vec <- grpreg:::coef.grpreg(fit, lambda = lambda)[-1]
+  coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
 
   # form beta matrix
   beta_mat <- matrix(0, nrow = n, ncol = d)

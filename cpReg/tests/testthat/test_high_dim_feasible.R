@@ -78,7 +78,7 @@ test_that("oracle_tune_tau works",{
   set.seed(20)
   dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
   lambda <- oracle_tune_lambda(dat$X, dat$y, c(0,0.5,1))
-  tau <- oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
+  tau <- oracle_tune_tau(dat$X, dat$y, lambda, c(0,0.5,1),
                          factor = 7/8)
 
   expect_true(is.numeric(tau))

@@ -55,8 +55,28 @@ test_that("high_dim_infeasible_estimate works", {
   true_partition <- c(0,0.5,1)
   n <- 100
   dat <- create_data(list(rep(10, 3), rep(-10, 3)), true_partition * n)
-  lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
+  lambda <- oracle_tune_grouplambda(dat$X, dat$y, true_partition)
   maxl2 <- .l2norm(rep(10, 3))
   K <- 1
   delta <- 10
+
+  res <- high_dim_infeasible_estimate(dat$X, dat$y, lambda, maxl2, K,
+                                      delta)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+  expect_true(all(names(res) == c("partition", "coef_list")))
+})
+
+##############
+
+## oracle_tune_grouplambda is correct
+
+test_that("oracle_tune_grouplambda works", {
+  set.seed(10)
+  true_partition <- c(0,0.5,1)
+  n <- 100
+  dat <- create_data(list(rep(10, 3), rep(-10, 3)), true_partition * n)
+
+
 })
