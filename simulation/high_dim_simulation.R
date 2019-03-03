@@ -2,7 +2,7 @@ rm(list=ls())
 library(simulation)
 library(cpReg)
 
-paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(300), length.out = 10))), c(1,2),
+paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
                                   1/2))
 colnames(paramMat) <- c("n", "X_type", "d/n")
 
@@ -44,16 +44,16 @@ criterion <- function(dat, vec, y){
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
                                 factor = 7/8)
   gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
-                                    factor = 5/8)
+                                    factor = 1/2)
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
   maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
   K <- 2
-  delta <- max(round(vec["n"]/30), 10)
+  delta <- max(round(vec["n"]/40), 10)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
-                                    verbose = F, max_candidates = 20, delta = delta)
+                                    verbose = F, max_candidates = NA, delta = delta, M = 0)
   res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
-                                            verbose = F, max_candidates = 20, delta = delta)
+                                            verbose = F, max_candidates = NA, delta = delta)
   res3 <- cpReg::high_dim_infeasible_estimate(dat$X, dat$y, grouplambda, maxl2, K, delta = delta)
 
   beta_mat1 <- cpReg::unravel(res1)
@@ -78,12 +78,12 @@ criterion <- function(dat, vec, y){
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
-# set.seed(2); criterion(rule(paramMat[4,]), paramMat[4,], 2)
+# set.seed(2); criterion(rule(paramMat[10,]), paramMat[10,], 2)
 
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 20,
+                                        paramMat = paramMat, trials = 2,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)

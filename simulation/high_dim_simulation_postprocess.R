@@ -31,34 +31,75 @@ for(i in 1:2){
   beta_mat_list[[i]] <- mat
 }
 
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(beta_mat),
-     main = "Sum of Beta L2 squared difference",
+par(mfrow = c(1,2))
+col_vec <- c(1,2,3)
+plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(beta_mat_list)),
+     main = "Sum of Beta L2 squared difference\n(Identity covariance)",
      xlab = "n", ylab = "Error")
-points(paramMat[1:10,"n"], beta_mat[,1], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], beta_mat[,1], col = "black", lwd = 2)
-points(paramMat[1:10,"n"], beta_mat[,2], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], beta_mat[,2], col = "black", lwd = 2, lty = 2)
+for(i in 1:3){
+  points(paramMat[1:10,"n"], beta_mat_list[[1]][,i], col = col_vec[i], pch = 16, cex = 1)
+  lines(paramMat[1:10,"n"], beta_mat_list[[1]][,i], col = col_vec[i], lwd = 2)
+}
+
+plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(beta_mat_list)),
+     main = "Sum of Beta L2 squared difference\n(Toeplitz covariance)",
+     xlab = "n", ylab = "Error")
+for(i in 1:3){
+  points(paramMat[1:10,"n"], beta_mat_list[[2]][,i], col = col_vec[i], pch = 16, cex = 1)
+  lines(paramMat[1:10,"n"], beta_mat_list[[2]][,i], col = col_vec[i], lwd = 2)
+}
+
 
 ############
 
 #extract hausdorff_error
 haus_list <- vector("list", 20)
 for(i in 1:length(res)){
-  idx <- which(sapply(res[[i]], length) > 1)
-  tmp <- res[[i]][idx]
-  haus_list[[i]] <- sapply(tmp, function(x){x$haus})
+  idx1 <- which(sapply(res_feasible[[i]], length) > 1)
+  idx2 <- which(sapply(res_infeasible[[i]], length) > 1)
+
+  idx <- intersect(idx1, idx2)
+
+  tmp1 <- res_feasible[[i]][idx]
+  tmp2 <- res_infeasible[[i]][idx]
+
+  haus_list[[i]] <- sapply(1:length(tmp1), function(x){
+    c(tmp1[[x]]$haus1, tmp1[[x]]$haus2,
+      tmp2[[x]]$haus3)
+  })
 }
-haus_mat <- matrix(sapply(haus_list, median), ncol = 2)
-haus_mat <- apply(haus_mat, 2, function(x){x/paramMat[1:10,"n"]})
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(haus_mat),
-     main = "Hausdorff distance divided by n",
+
+#format in matrices
+haus_mat_list <- vector("list", 2)
+for(i in 1:2){
+  mat <- matrix(0, nrow = 10, ncol = 3)
+  for(j in 1:10){
+    mat[j,] <- apply(haus_list[[(i-1)*10+j]], 1, median)/paramMat[j,"n"]
+  }
+  haus_mat_list[[i]] <- mat
+}
+
+par(mfrow = c(1,2))
+col_vec <- c(1,2,3)
+plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(haus_mat_list)),
+     main = "Hausdorff distance\n(Identity covariance)",
      xlab = "n", ylab = "Error")
-points(paramMat[1:10,"n"], haus_mat[,1], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], haus_mat[,1], col = "black", lwd = 2)
-points(paramMat[1:10,"n"], haus_mat[,2], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], haus_mat[,2], col = "black", lwd = 2, lty = 2)
+for(i in 1:3){
+  points(paramMat[1:10,"n"], haus_mat_list[[1]][,i], col = col_vec[i], pch = 16, cex = 1)
+  lines(paramMat[1:10,"n"], haus_mat_list[[1]][,i], col = col_vec[i], lwd = 2)
+}
+
+plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(haus_mat_list)),
+     main = "Hausdorff distance\n(Toeplitz covariance)",
+     xlab = "n", ylab = "Error")
+for(i in 1:3){
+  points(paramMat[1:10,"n"], haus_mat_list[[2]][,i], col = col_vec[i], pch = 16, cex = 1)
+  lines(paramMat[1:10,"n"], haus_mat_list[[2]][,i], col = col_vec[i], lwd = 2)
+}
 
 ############
+
+# NEED TO UPDATE
 
 # extract lambda
 # remember that glmnet solves the version with 1/n, so we need to scale up
