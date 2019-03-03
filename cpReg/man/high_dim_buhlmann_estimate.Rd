@@ -5,7 +5,7 @@
 \title{High dimensional estimator - Buhlmann}
 \usage{
 high_dim_buhlmann_estimate(X, y, lambda, gamma, delta = 10,
-  verbose = F)
+  max_candidates = NA, verbose = F)
 }
 \arguments{
 \item{X}{\code{n} by \code{d} matrix}

@@ -23,6 +23,14 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
   list(partition = as.numeric(combn_mat[,idx]), coef_list = res_list[[idx]]$coef_list)
 }
 
+#' Tune group lambda (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param partition vector with values between 0 and 1
+#'
+#' @return numeric
+#' @export
 oracle_tune_grouplambda <- function(X, y, partition){
   n <- nrow(X); d <- ncol(X); k <- length(partition)-1
   partition_idx <- round(partition*n)

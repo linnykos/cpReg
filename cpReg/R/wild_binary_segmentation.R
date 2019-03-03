@@ -2,7 +2,7 @@ wbs <- function(data,
                 data_length_func,
                 compute_cusum_func,
                 tau_function, M = 100, delta = 1,
-                max_candidates = data_length_func(data),
+                max_candidates = NA,
                 verbose = F, ...){
   # initialize
   n <- data_length_func(data)
@@ -21,6 +21,7 @@ wbs <- function(data,
     res_list <- lapply(interval_list, function(x){
       .find_breakpoint(data = data, interval = x, delta = delta,
                        max_candidates = max_candidates,
+                       data_length_func = data_length_func,
                        compute_cusum_func = compute_cusum_func,
                        verbose = verbose, ...)})
     res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
@@ -85,17 +86,19 @@ wbs <- function(data,
 
 .find_breakpoint <- function(data, interval, delta = 1,
                              max_candidates = 50,
+                             data_length_func,
                              compute_cusum_func,
                              verbose = F, ...){
   # check length
   stopifnot(interval[2] > interval[1])
   if(interval[2] - interval[1] < 2*delta+1) return(list(val = NA, b = NA))
+  n <- data_length_func(data)
 
   seq_vec <- (interval[1]+delta):(interval[2]-1-delta)
 
   # if too many candidates, cut in half
-  if(length(seq_vec) > max_candidates){
-    seq_vec <- seq_vec[seq(1, length(seq_vec), by = 2)]
+  if(!is.na(max_candidates) && length(seq_vec) > max_candidates){
+    seq_vec <- sort(intersect(seq_vec, seq(delta, n - delta, by = delta)))
   }
 
   vec <- sapply(seq_vec, function(x){

@@ -5,7 +5,7 @@
 \title{High dimensional estimator (feasible)}
 \usage{
 high_dim_feasible_estimate(X, y, lambda, tau, M = 100, delta = 10,
-  verbose = F)
+  max_candidates = NA, verbose = F)
 }
 \arguments{
 \item{X}{\code{n} by \code{d} matrix}
@@ -19,6 +19,8 @@ high_dim_feasible_estimate(X, y, lambda, tau, M = 100, delta = 10,
 \item{M}{numeric}
 
 \item{delta}{numeric}
+
+\item{max_candidates}{numeric}
 
 \item{verbose}{boolean}
 }

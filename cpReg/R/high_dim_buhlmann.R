@@ -5,12 +5,13 @@
 #' @param lambda numeric
 #' @param gamma numeric
 #' @param delta numeric
+#' @param max_candidates numeric
 #' @param verbose boolean
 #'
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
 high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
-                                       delta = 10, max_candidates = 50,
+                                       delta = 10, max_candidates = NA,
                                        verbose = F){
   data <- list(X = X, y = y)
   partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
