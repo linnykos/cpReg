@@ -1,14 +1,36 @@
 rm(list=ls())
-load("../results/high_dim_simulation_1000.RData")
+load("../results/high_dim_simulation_feasible.RData")
+res_feasible <- res
+load("../results/high_dim_simulation_infeasible.RData")
+res_infeasible <- res
 
 #extract beta_error
 beta_list <- vector("list", 20)
 for(i in 1:length(res)){
-  idx <- which(sapply(res[[i]], length) > 1)
-  tmp <- res[[i]][idx]
-  beta_list[[i]] <- sapply(tmp, function(x){x$beta_error})
+  idx1 <- which(sapply(res_feasible[[i]], length) > 1)
+  idx2 <- which(sapply(res_infeasible[[i]], length) > 1)
+
+  idx <- intersect(idx1, idx2)
+
+  tmp1 <- res_feasible[[i]][idx]
+  tmp2 <- res_infeasible[[i]][idx]
+
+  beta_list[[i]] <- sapply(1:length(tmp1), function(x){
+    c(tmp1[[x]]$beta_error1, tmp1[[x]]$beta_error2,
+      tmp2[[x]]$beta_error3)
+  })
 }
-beta_mat <- matrix(sapply(beta_list, median), ncol = 2)
+
+#format in matrices
+beta_mat_list <- vector("list", 2)
+for(i in 1:2){
+  mat <- matrix(0, nrow = 10, ncol = 3)
+  for(j in 1:10){
+    mat[j,] <- apply(beta_list[[(i-1)*10+j]], 1, median)
+  }
+  beta_mat_list[[i]] <- mat
+}
+
 plot(NA, xlim = range(paramMat[,"n"]), ylim = range(beta_mat),
      main = "Sum of Beta L2 squared difference",
      xlab = "n", ylab = "Error")

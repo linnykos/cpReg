@@ -38,32 +38,43 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
+  true_beta <- create_coef(vec, full = T)
+
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
                                 factor = 7/8)
   gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
                                     factor = 5/8)
+  grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
+  maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
+  K <- 2
+  delta <- max(round(vec["n"]/30), 10)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
-                                    verbose = F, max_candidates = NA)
+                                    verbose = F, max_candidates = 20, delta = delta)
   res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
-                                            verbose = F, max_candidates = NA)
-
-  true_beta <- create_coef(vec, full = T)
+                                            verbose = F, max_candidates = 20, delta = delta)
+  res3 <- cpReg::high_dim_infeasible_estimate(dat$X, dat$y, grouplambda, maxl2, K, delta = delta)
 
   beta_mat1 <- cpReg::unravel(res1)
   beta_mat2 <- cpReg::unravel(res2)
+  beta_mat3 <- cpReg::unravel(res3)
 
   beta_error1 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat1[x,] - true_beta[x,])^2}))/vec["n"]
   beta_error2 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_error3 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat3[x,] - true_beta[x,])^2}))/vec["n"]
 
   haus1 <- cpReg::hausdorff(res1$partition, round(true_partition*vec["n"]))
   haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*vec["n"]))
+  haus3 <- cpReg::hausdorff(res3$partition, round(true_partition*vec["n"]))
 
   list(beta_error1 = beta_error1, beta_error2 = beta_error2,
-       haus1 = haus1, haus2 = haus2,
+       beta_error3 = beta_error3,
+       haus1 = haus1, haus2 = haus2, haus3 = haus3,
        partition1 = res1$partition, partition2 = res2$partition,
-       lambda = lambda, tau = tau, gamma = gamma)
+       partition3 = res3$partition,
+       lambda = lambda, tau = tau, gamma = gamma,
+       grouplambda = grouplambda)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
