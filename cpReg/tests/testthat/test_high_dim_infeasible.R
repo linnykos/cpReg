@@ -77,6 +77,8 @@ test_that("oracle_tune_grouplambda works", {
   true_partition <- c(0,0.5,1)
   n <- 100
   dat <- create_data(list(rep(10, 3), rep(-10, 3)), true_partition * n)
+  res <- oracle_tune_grouplambda(dat$X, dat$y, true_partition)
 
-
+  expect_true(is.numeric(res))
+  expect_true(res > 0)
 })
