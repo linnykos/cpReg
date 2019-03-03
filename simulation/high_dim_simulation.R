@@ -39,14 +39,15 @@ rule <- function(vec){
 
 criterion <- function(dat, vec, y){
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
-  tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition)
+  tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
+                                factor = 7/8)
   gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
-                                    factor = 3/4)
+                                    factor = 5/8)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
-                                    verbose = F)
+                                    verbose = F, max_candidates = vec["n"])
   res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
-                                            verbose = F)
+                                            verbose = F, max_candidates = vec["n"])
 
   true_beta <- create_coef(vec, full = T)
 
