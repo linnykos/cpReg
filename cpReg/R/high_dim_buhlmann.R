@@ -59,6 +59,31 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
   res*factor
 }
 
+#' Tune screening tau for high dimensional infeasible (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param partition vector with values between 0 and 1
+#' @param factor numeric
+#'
+#' @return numeric
+#' @export
+oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
+  stopifnot(all(partition >= 0))
+
+  coef_list <- .refit_high_dim(X, y, lambda, partition)
+  partition_idx <- round(partition*n)
+  fit <- list(partition = partition_idx, coef_list = coef_list)
+  mat <- unravel(fit)
+
+  vec <- sapply(2:(length(partition_idx)-1), function(x){
+    .compute_cusum(mat, partition_idx[x-1], partition_idx[x+1], partition_idx[x])
+  })
+
+  min(vec)*factor
+}
+
 ##################
 
 .compute_regression_buhlmann <- function(data, start, end, breakpoint, lambda, gamma){

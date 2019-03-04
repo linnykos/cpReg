@@ -54,3 +54,15 @@ hausdorff <- function(set1, set2, one.sided = FALSE){
 .l2norm <- function(x){
   sqrt(sum(x^2))
 }
+
+.create_full_matrix <- function(coef_list, partition){
+  n <- partition[length(partition)]
+  mat <- matrix(0, nrow = n, ncol = length(coef_list[[1]]))
+  len <- length(partition)
+
+  for(i in 1:(len-1)){
+    mat[(partition[i]+1):partition[i+1],] <- rep(coef_list[[i]], each = partition[i+1]-partition[i])
+  }
+
+  mat
+}

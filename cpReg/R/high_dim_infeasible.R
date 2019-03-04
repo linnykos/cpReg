@@ -31,7 +31,7 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
 #'
 #' @return numeric
 #' @export
-oracle_tune_grouplambda <- function(X, y, partition){
+oracle_tune_grouplambda <- function(X, y, partition, return_refit = F){
   n <- nrow(X); d <- ncol(X); k <- length(partition)-1
   partition_idx <- round(partition*n)
 
@@ -41,9 +41,39 @@ oracle_tune_grouplambda <- function(X, y, partition){
   fit <- grpreg::cv.grpreg(X_new, y, group = group_vec, penalty = "grLasso",
                         group.multiplier = rep(1, d))
 
-  .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
+  if(!return_refit){
+    .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
+  } else {
+    lambda <- .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
+    fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
+                          group.multiplier = rep(1, d))
+    coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
+
+    .convert_grouplasso_to_cp(coef_vec, partition_idx, n, d)
+  }
 }
 
+#' Tune screening tau for high dimensional infeasible (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param partition vector with values between 0 and 1
+#' @param factor numeric
+#'
+#' @return numeric
+#' @export
+oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
+  stopifnot(all(partition >= 0))
+
+  mat <- oracle_tune_grouplambda(X, y, partition, return_refit = T)
+
+  partition_idx <- round(partition*n)
+  vec <- sapply(2:(length(partition_idx)-1), function(x){
+    .compute_cusum(mat, partition_idx[x-1], partition_idx[x+1], partition_idx[x])
+  })
+
+  min(vec)*factor
+}
 
 ##################
 
@@ -63,14 +93,7 @@ oracle_tune_grouplambda <- function(X, y, partition){
                         group.multiplier = rep(1, d))
   coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
 
-  # form beta matrix
-  beta_mat <- matrix(0, nrow = n, ncol = d)
-  beta_list <- vector("list", k)
-  for(i in 1:k){
-    idx <- (partition[i]+1):partition[i+1]
-    beta_list[[i]] <- coef_vec[(d*(i-1)+1):(d*i)]/sqrt(length(idx))
-    beta_mat[idx,] <- t(sapply(1:length(idx), function(x){beta_list[[i]]}))
-  }
+  beta_mat <- .convert_grouplasso_to_cp(coef_vec, partition, n, p)
 
   # check that the l2norm constraint is met
   for(i in 1:d){
@@ -85,6 +108,18 @@ oracle_tune_grouplambda <- function(X, y, partition){
   obj_val <- .l2norm(y - y_pred)^2/n + lambda*sum(apply(beta_mat, 2, .l2norm))
 
   list(obj_val = obj_val, coef_list = beta_list)
+}
+
+.convert_grouplasso_to_cp <- function(coef_vec, partition, n, d){
+  beta_mat <- matrix(0, nrow = n, ncol = d)
+  beta_list <- vector("list", k)
+  for(i in 1:k){
+    idx <- (partition[i]+1):partition[i+1]
+    beta_list[[i]] <- coef_vec[(d*(i-1)+1):(d*i)]/sqrt(length(idx))
+    beta_mat[idx,] <- t(sapply(1:length(idx), function(x){beta_list[[i]]}))
+  }
+
+  beta_mat
 }
 
 .reformat_covariates <- function(X, partition){

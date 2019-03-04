@@ -42,13 +42,17 @@ criterion <- function(dat, vec, y){
 
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
-                                factor = 7/8)
+                                factor = 3/4)
   gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
                                     factor = 1/2)
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
+
+  screeningtau <- oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
+  group_screeningtau <-  cpReg::oracle_tune_group_screeningtau(dat$X, dat$y, true_partition)
+
   maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
-  K <- 2
-  delta <- max(round(vec["n"]/40), 10)
+  K <- 4
+  delta <- max(round(vec["n"]/10), 10)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                     verbose = F, max_candidates = NA, delta = delta, M = 0)
@@ -68,13 +72,30 @@ criterion <- function(dat, vec, y){
   haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*vec["n"]))
   haus3 <- cpReg::hausdorff(res3$partition, round(true_partition*vec["n"]))
 
-  list(beta_error1 = beta_error1, beta_error2 = beta_error2,
-       beta_error3 = beta_error3,
-       haus1 = haus1, haus2 = haus2, haus3 = haus3,
-       partition1 = res1$partition, partition2 = res2$partition,
-       partition3 = res3$partition,
-       lambda = lambda, tau = tau, gamma = gamma,
-       grouplambda = grouplambda)
+  #### now see what changes after regression
+
+  partition2b <- cpReg::screening(beta_mat2, screeningtau, M = 0)
+  partition3b <- cpReg::screening(beta_mat3, group_screeningtau, M = 0)
+
+  beta_mat2b <- cpReg::unravel(list(partition = partition2b,
+                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition2b)))
+  beta_mat3b <- cpReg::unravel(list(partition = partition3b,
+                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition3b)))
+
+  beta_error2b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2b[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_error3b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat3b[x,] - true_beta[x,])^2}))/vec["n"]
+
+  haus2b <- cpReg::hausdorff(res2b$partition, round(true_partition*vec["n"]))
+  haus3b <- cpReg::hausdorff(res3b$partition, round(true_partition*vec["n"]))
+
+  list(beta_error = list(beta_error1, beta_error2, beta_error3,
+                         beta_error2b, beta_error3b),
+       haus = list(haus1, haus2, haus3, haus2b, haus3b),
+       partition = list(res1$partition, res2$partition, res3$partition,
+                        partition2b, partition3b),
+       parameters = list(lambda = lambda, tau = tau, gamma = gamma,
+                         grouplambda = grouplambda, screeningtau = screeningtau,
+                         group_screeningtau = group_screeningtau))
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
