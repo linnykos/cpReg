@@ -47,7 +47,7 @@ criterion <- function(dat, vec, y){
                                     factor = 1/2)
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
 
-  screeningtau <- oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
+  screeningtau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
   group_screeningtau <-  cpReg::oracle_tune_group_screeningtau(dat$X, dat$y, true_partition)
 
   maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))

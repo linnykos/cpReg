@@ -72,6 +72,7 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
 oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
   stopifnot(all(partition >= 0))
 
+  n <- nrow(X)
   coef_list <- .refit_high_dim(X, y, lambda, partition)
   partition_idx <- round(partition*n)
   fit <- list(partition = partition_idx, coef_list = coef_list)
