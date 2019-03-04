@@ -65,6 +65,7 @@ oracle_tune_grouplambda <- function(X, y, partition, return_refit = F){
 oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
   stopifnot(all(partition >= 0))
 
+  n <- nrow(X)
   mat <- oracle_tune_grouplambda(X, y, partition, return_refit = T)
 
   partition_idx <- round(partition*n)
@@ -93,6 +94,7 @@ oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
                         group.multiplier = rep(1, d))
   coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
 
+  beta_list <-
   beta_mat <- .convert_grouplasso_to_cp(coef_vec, partition, n, d)
 
   # check that the l2norm constraint is met
@@ -110,16 +112,27 @@ oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
   list(obj_val = obj_val, coef_list = beta_list)
 }
 
-.convert_grouplasso_to_cp <- function(coef_vec, partition, n, d){
-  beta_mat <- matrix(0, nrow = n, ncol = d)
-  beta_list <- vector("list", k)
-  for(i in 1:k){
-    idx <- (partition[i]+1):partition[i+1]
-    beta_list[[i]] <- coef_vec[(d*(i-1)+1):(d*i)]/sqrt(length(idx))
-    beta_mat[idx,] <- t(sapply(1:length(idx), function(x){beta_list[[i]]}))
+.convert_grouplasso_to_cp <- function(coef_vec, partition, n, d, as_list = F){
+
+  k <- length(partition)-1
+
+  if(as_list){
+    beta_list <- vector("list", k)
+  } else {
+    beta_mat <- matrix(0, nrow = n, ncol = d)
   }
 
-  beta_mat
+  for(i in 1:k){
+    idx <- (partition[i]+1):partition[i+1]
+    tmp <- coef_vec[(d*(i-1)+1):(d*i)]/sqrt(length(idx))
+    if(as_list){
+      beta_list[[i]] <- tmp
+    } else {
+      beta_mat[idx,] <- t(sapply(1:length(idx), function(x){tmp}))
+    }
+  }
+
+  if(as_list){beta_list} else{beta_mat}
 }
 
 .reformat_covariates <- function(X, partition){

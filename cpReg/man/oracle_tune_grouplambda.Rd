@@ -4,7 +4,7 @@
 \alias{oracle_tune_grouplambda}
 \title{Tune group lambda (oracle)}
 \usage{
-oracle_tune_grouplambda(X, y, partition)
+oracle_tune_grouplambda(X, y, partition, return_refit = F)
 }
 \arguments{
 \item{X}{\code{n} by \code{d} matrix}

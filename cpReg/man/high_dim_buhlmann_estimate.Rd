@@ -18,6 +18,8 @@ high_dim_buhlmann_estimate(X, y, lambda, gamma, delta = 10,
 
 \item{delta}{numeric}
 
+\item{max_candidates}{numeric}
+
 \item{verbose}{boolean}
 }
 \value{
