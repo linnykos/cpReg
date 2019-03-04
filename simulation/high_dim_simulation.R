@@ -12,9 +12,9 @@ true_partition <- c(0,0.3,0.7,1)
 #############
 
 create_coef <- function(vec, full = F){
-  d <- vec["d/n"]*vec["n"]
-  beta1 <- c(rep(1, 2), rep(0, d-2))
-  beta2 <- c(rep(0, d-2), rep(1, 2))
+  d <- 50
+  beta1 <- c(rep(1, 10), rep(0, d-10))
+  beta2 <- c(rep(0, d-10), rep(1, 10))
   lis <- list(beta1 = beta1, beta2 = beta2)
 
   if(!full){

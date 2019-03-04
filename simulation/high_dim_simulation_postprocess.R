@@ -1,30 +1,22 @@
 rm(list=ls())
-load("../results/high_dim_simulation_feasible.RData")
-res_feasible <- res
-load("../results/high_dim_simulation_infeasible.RData")
-res_infeasible <- res
+load("../results/high_dim_simulation.RData")
+
+max_idx <- 10
 
 #extract beta_error
 beta_list <- vector("list", 20)
 for(i in 1:length(res)){
-  idx1 <- which(sapply(res_feasible[[i]], length) > 1)
-  idx2 <- which(sapply(res_infeasible[[i]], length) > 1)
+  idx <- which(sapply(res[[i]], length) > 1)
 
-  idx <- intersect(idx1, idx2)
+  tmp <- res[[i]][idx]
 
-  tmp1 <- res_feasible[[i]][idx]
-  tmp2 <- res_infeasible[[i]][idx]
-
-  beta_list[[i]] <- sapply(1:length(tmp1), function(x){
-    c(tmp1[[x]]$beta_error1, tmp1[[x]]$beta_error2,
-      tmp2[[x]]$beta_error3)
-  })
+  beta_list[[i]] <- sapply(tmp, function(x){unlist(x$beta_error)})
 }
 
 #format in matrices
 beta_mat_list <- vector("list", 2)
 for(i in 1:2){
-  mat <- matrix(0, nrow = 10, ncol = 3)
+  mat <- matrix(0, nrow = 10, ncol = 5)
   for(j in 1:10){
     mat[j,] <- apply(beta_list[[(i-1)*10+j]], 1, median)
   }
@@ -32,47 +24,43 @@ for(i in 1:2){
 }
 
 par(mfrow = c(1,2))
-col_vec <- c(1,2,3)
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(beta_mat_list)),
+col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
      main = "Sum of Beta L2 squared difference\n(Identity covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:3){
-  points(paramMat[1:10,"n"], beta_mat_list[[1]][,i], col = col_vec[i], pch = 16, cex = 1)
-  lines(paramMat[1:10,"n"], beta_mat_list[[1]][,i], col = col_vec[i], lwd = 2)
+for(i in 1:5){
+  points(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
 }
 
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(beta_mat_list)),
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
      main = "Sum of Beta L2 squared difference\n(Toeplitz covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:3){
-  points(paramMat[1:10,"n"], beta_mat_list[[2]][,i], col = col_vec[i], pch = 16, cex = 1)
-  lines(paramMat[1:10,"n"], beta_mat_list[[2]][,i], col = col_vec[i], lwd = 2)
+for(i in 1:5){
+  points(paramMat[1:max_idx,"n"], beta_mat_list[[2]][1:max_idx,i], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], beta_mat_list[[2]][1:max_idx,i], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
 }
-
 
 ############
 
 #extract hausdorff_error
 haus_list <- vector("list", 20)
 for(i in 1:length(res)){
-  idx1 <- which(sapply(res_feasible[[i]], length) > 1)
-  idx2 <- which(sapply(res_infeasible[[i]], length) > 1)
+  idx <- which(sapply(res[[i]], length) > 1)
 
-  idx <- intersect(idx1, idx2)
+  tmp <- res[[i]][idx]
 
-  tmp1 <- res_feasible[[i]][idx]
-  tmp2 <- res_infeasible[[i]][idx]
-
-  haus_list[[i]] <- sapply(1:length(tmp1), function(x){
-    c(tmp1[[x]]$haus1, tmp1[[x]]$haus2,
-      tmp2[[x]]$haus3)
-  })
+  haus_list[[i]] <- sapply(tmp, function(x){unlist(x$haus)})
 }
 
 #format in matrices
 haus_mat_list <- vector("list", 2)
 for(i in 1:2){
-  mat <- matrix(0, nrow = 10, ncol = 3)
+  mat <- matrix(0, nrow = 10, ncol = 5)
   for(j in 1:10){
     mat[j,] <- apply(haus_list[[(i-1)*10+j]], 1, median)/paramMat[j,"n"]
   }
@@ -80,61 +68,103 @@ for(i in 1:2){
 }
 
 par(mfrow = c(1,2))
-col_vec <- c(1,2,3)
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(haus_mat_list)),
+col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list)),
      main = "Hausdorff distance\n(Identity covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:3){
-  points(paramMat[1:10,"n"], haus_mat_list[[1]][,i], col = col_vec[i], pch = 16, cex = 1)
-  lines(paramMat[1:10,"n"], haus_mat_list[[1]][,i], col = col_vec[i], lwd = 2)
+for(i in 1:5){
+  points(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
 }
 
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(unlist(haus_mat_list)),
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list)),
      main = "Hausdorff distance\n(Toeplitz covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:3){
-  points(paramMat[1:10,"n"], haus_mat_list[[2]][,i], col = col_vec[i], pch = 16, cex = 1)
-  lines(paramMat[1:10,"n"], haus_mat_list[[2]][,i], col = col_vec[i], lwd = 2)
+for(i in 1:5){
+  points(paramMat[1:max_idx,"n"], haus_mat_list[[2]][1:max_idx,i], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], haus_mat_list[[2]][1:max_idx,i], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
 }
+
+###################
+
+# make the plot
+
+png("../figure/high_dimension_identity.png",
+    height = 1500, width = 2500, res = 300, units = "px")
+par(mfrow = c(1,2))
+col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
+     main = "Sum of Beta L2 squared\ndifference (Identity covariance)",
+     xlab = "n", ylab = "Error")
+for(i in 1:5){
+  points(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
+}
+
+col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list)),
+     main = "Hausdorff distance\n(Identity covariance)",
+     xlab = "n", ylab = "Error")
+for(i in 1:5){
+  points(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
+}
+
+legend("topright",
+       c("Feasible", "Buhlmann", "Buhlmann - Screened",
+         "Infeasible", "Infeasible - Screened"),
+       cex = 0.7, col = c(1, 2, 2, 3, 3),
+       lty = c(1,1,2,1,2))
+
+graphics.off()
 
 ############
 
-# NEED TO UPDATE
-
-# extract lambda
 # remember that glmnet solves the version with 1/n, so we need to scale up
-lambda_list <- vector("list", 20)
+param_list <- vector("list", 20)
 for(i in 1:length(res)){
   idx <- which(sapply(res[[i]], length) > 1)
+
   tmp <- res[[i]][idx]
-  lambda_list[[i]] <- sapply(tmp, function(x){x$lambda})
+
+  param_list[[i]] <- sapply(tmp, function(x){unlist(x$parameters)})
 }
-lambda_mat <- matrix(sapply(lambda_list, median), ncol = 2)
-lambda_mat <- apply(lambda_mat, 2, function(x){x*paramMat[1:10,"n"]})
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(lambda_mat),
-     main = "Oracle Lambda",
-     xlab = "n", ylab = "Lambda value")
-points(paramMat[1:10,"n"], lambda_mat[,1], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], lambda_mat[,1], col = "black", lwd = 2)
-points(paramMat[1:10,"n"], lambda_mat[,2], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], lambda_mat[,2], col = "black", lwd = 2, lty = 2)
 
-####################
-
-# extract tau
-tau_list <- vector("list", 20)
-for(i in 1:length(res)){
-  idx <- which(sapply(res[[i]], length) > 1)
-  tmp <- res[[i]][idx]
-  tau_list[[i]] <- sapply(tmp, function(x){x$tau})
+#format in matrices
+param_mat_list <- vector("list", 2)
+for(i in 1:2){
+  mat <- matrix(0, nrow = 10, ncol = 6)
+  for(j in 1:10){
+    mat[j,] <- apply(param_list[[(i-1)*10+j]], 1, median)
+  }
+  param_mat_list[[i]] <- mat
 }
-tau_mat <- matrix(sapply(tau_list, median), ncol = 2)
-plot(NA, xlim = range(paramMat[,"n"]), ylim = range(tau_mat),
-     main = "Oracle tau",
-     xlab = "n", ylab = "tau value")
-points(paramMat[1:10,"n"], tau_mat[,1], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], tau_mat[,1], col = "black", lwd = 2)
-points(paramMat[1:10,"n"], tau_mat[,2], col = "black", pch = 16, cex = 1)
-lines(paramMat[1:10,"n"], tau_mat[,2], col = "black", lwd = 2, lty = 2)
 
+for(i in 1:2){
+  for(j in c(1,4)){
+    param_mat_list[[i]][,j] <- param_mat_list[[i]][,j]*paramMat[1:10,"n"]
+  }
+}
 
+png("../figure/high_dimension_parameters.png",
+    height = 1500, width = 2500, res = 300, units = "px")
+par(mfrow = c(2,3))
+main_vec <- c("Lambda\n(All)", "Tau\n(Feasible)",
+              "Gamma\n(Buhlmann)", "Lambda\n(Infeasible)", "Tau\n(Screening Buhlmann)",
+              "Tau\n(Screening Infeasible)")
+for(i in 1:6){
+  plot(paramMat[1:max_idx,"n"], param_mat_list[[1]][1:max_idx,i],
+       pch = 16, cex = 1.5,
+       xlab = "n", ylab = "Value", main = main_vec[i])
+  lines(paramMat[1:max_idx,"n"], param_mat_list[[1]][1:max_idx,i],
+          lty = 1, lwd = 2)
+}
+graphics.off()
