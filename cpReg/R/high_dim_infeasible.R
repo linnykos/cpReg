@@ -94,7 +94,7 @@ oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
                         group.multiplier = rep(1, d))
   coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
 
-  beta_list <-
+  beta_list <- .convert_grouplasso_to_cp(coef_vec, partition, n, d, as_list = T)
   beta_mat <- .convert_grouplasso_to_cp(coef_vec, partition, n, d)
 
   # check that the l2norm constraint is met

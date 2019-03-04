@@ -78,15 +78,15 @@ criterion <- function(dat, vec, y){
   partition3b <- cpReg::screening(beta_mat3, group_screeningtau, M = 0)
 
   beta_mat2b <- cpReg::unravel(list(partition = partition2b,
-                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition2b)))
+                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition2b/vec["n"])))
   beta_mat3b <- cpReg::unravel(list(partition = partition3b,
-                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition3b)))
+                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition3b/vec["n"])))
 
   beta_error2b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2b[x,] - true_beta[x,])^2}))/vec["n"]
   beta_error3b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat3b[x,] - true_beta[x,])^2}))/vec["n"]
 
-  haus2b <- cpReg::hausdorff(res2b$partition, round(true_partition*vec["n"]))
-  haus3b <- cpReg::hausdorff(res3b$partition, round(true_partition*vec["n"]))
+  haus2b <- cpReg::hausdorff(partition2b, round(true_partition*vec["n"]))
+  haus3b <- cpReg::hausdorff(partition3b, round(true_partition*vec["n"]))
 
   list(beta_error = list(beta_error1, beta_error2, beta_error3,
                          beta_error2b, beta_error3b),
