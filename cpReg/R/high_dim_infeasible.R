@@ -20,7 +20,8 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
 
   idx <- which.min(sapply(res_list, function(x){x$obj_val}))
 
-  list(partition = as.numeric(combn_mat[,idx]), coef_list = res_list[[idx]]$coef_list)
+  list(partition = as.numeric(combn_mat[,idx]), coef_list = res_list[[idx]]$coef_list,
+       obj_val = res_list[[idx]]$obj_val)
 }
 
 #' Tune group lambda (oracle)
