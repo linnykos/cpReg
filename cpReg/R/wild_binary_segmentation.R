@@ -24,7 +24,9 @@ wbs <- function(data,
                        data_length_func = data_length_func,
                        compute_cusum_func = compute_cusum_func,
                        verbose = verbose, ...)})
-    res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
+    tmp <- sapply(res_list, function(x){x$val})
+    if(all(is.na(tmp))) break()
+    res <- res_list[[which.max(tmp)]]
 
     # if passes threshold, recurse
     if(res$val >= tau_function(data = data, interval = interval, ...)){

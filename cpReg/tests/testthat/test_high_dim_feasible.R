@@ -57,6 +57,50 @@ test_that("high_dim_feasible_estimate works" ,{
   expect_true(length(res) == 2)
 })
 
+test_that("high_dim_feasible_estimate exits gracefully when delta is large" ,{
+  vec <- c("n" = 100, "X_type" = 1, "d/n" = 0.5)
+  X_type_vec <- c("identity", "toeplitz", "equicorrelation")
+  true_partition <- c(0,0.3,0.7,1)
+
+  create_coef <- function(vec, full = F){
+    d <- 50
+    beta1 <- c(rep(1, 10), rep(0, d-10))
+    beta2 <- c(rep(0, d-10), rep(1, 10))
+    lis <- list(beta1 = beta1, beta2 = beta2)
+
+    if(!full){
+      lis
+    } else {
+      mat <- matrix(0, nrow = vec["n"], ncol = vec["d/n"]*vec["n"])
+      idx <- round(true_partition*vec["n"])
+      for(i in 1:(length(idx)-1)){
+        zz <- i %% 2; if(zz == 0) zz <- 2
+        mat[(idx[i]+1):idx[i+1],] <- rep(lis[[zz]], each = idx[i+1]-idx[i])
+      }
+      mat
+    }
+  }
+
+  rule <- function(vec){
+    lis <- create_coef(vec, full = F)
+
+    cpReg::create_data(list(lis$beta1, lis$beta2, lis$beta1), round(true_partition*vec["n"]),
+                       cov_type = X_type_vec[vec["X_type"]])
+  }
+
+  set.seed(1)
+  dat <- rule(vec)
+  lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
+  tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
+                                factor = 3/4)
+  delta <- max(round(vec["n"]/10), 10)
+
+  res <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
+                                            verbose = F, max_candidates = NA, delta = delta, M = 0)
+
+  expect_true(is.list(res))
+})
+
 ################
 
 ## oracle_tune_lambda is correct
@@ -84,6 +128,4 @@ test_that("oracle_tune_tau works",{
   expect_true(is.numeric(tau))
   expect_true(tau > 0)
 })
-
-
 

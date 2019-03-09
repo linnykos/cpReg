@@ -1,47 +1,90 @@
-rm(list=ls())
-set.seed(10)
-d <- 50; n <- 100; snr <- 10
-beta1 <- c(rep(snr, 2), rep(0, d-2))
-beta2 <- c(rep(0, d-2), rep(snr, 2))
-true_partition <- c(0,0.25,0.75,1)
-dat <- create_data(list(beta1, beta2, beta1),
-                   round(true_partition*n),
-                   cov_type = "identity")
+set.seed(1)
+vec <- paramMat[1,]
+dat <- rule(vec)
 
-lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
-#tau <- oracle_tune_tau(dat$X, dat$y, lambda, true_partition)
-gamma <- oracle_tune_gamma(dat$X, dat$y, lambda, true_partition)
+true_beta <- create_coef(vec, full = T)
 
-#res <- high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
-#                                  verbose = T)
+lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
+tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
+                              factor = 3/4)
+gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
+                                  factor = 1/2)
+grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
 
-res <- high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
-                                  verbose = F)
+screeningtau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
+group_screeningtau <-  cpReg::oracle_tune_group_screeningtau(dat$X, dat$y, true_partition)
 
-##############
+maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
+K <- 4
+delta <- max(round(vec["n"]/10), 10)
 
-X <- dat$X; y <- dat$y; partition = true_partition; factor = 3/4
+res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
+                                          verbose = F, max_candidates = NA, delta = delta, M = 0)
 
-coef_list <- .refit_high_dim(X, y, lambda, partition)
-n <- nrow(X)
-partition_idx <- round(partition*n)
-k <- length(coef_list)
+##########################
+X = dat$X; y = dat$y
+M = 100
+delta = 10; max_candidates = NA; verbose = F
 
-print(partition_idx)
+tau_function <- function(data, interval, ...){
+  tau
+}
 
-res <- sapply(1:(k-1), function(x){
-  idx1 <- (partition_idx[x]+1):partition_idx[x+1]
-  idx2 <- (partition_idx[x+1]+1):partition_idx[x+2]
+M <- 0
+data <- list(X = X, y = y)
+# partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
+#                  compute_cusum_func = .compute_regression_cusum,
+#                  tau_function = tau_function, M = M, delta = delta, max_candidates = max_candidates,
+#                  verbose = verbose, lambda = lambda)
+data_length_func = function(x){nrow(x$X)}
+compute_cusum_func = .compute_regression_cusum
 
-  fit <- glmnet::glmnet(X[c(idx1, idx2),,drop = F], y[c(idx1, idx2)],
-                        intercept = F)
-  alternative_coef <- glmnet::coef.glmnet(fit, s = lambda*sqrt(length(c(idx1,idx2))))[-1]
-  loss <- as.numeric(.l2norm(X[c(idx1, idx2),,drop=F]%*%alternative_coef - y[c(idx1, idx2)])^2)/n
+# initialize
+n <- data_length_func(data)
+random_intervals <- .generate_intervals(n, M)
+q <- dequer::queue()
+dequer::pushback(q, c(0,n))
+b_vec <- numeric(0)
+counter <- 0
 
-  loss1 <- as.numeric(.l2norm(X[idx1,,drop=F]%*%coef_list[[x]] - y[idx1])^2)/n
-  loss2 <- as.numeric(.l2norm(X[idx2,,drop=F]%*%coef_list[[x+1]] - y[idx2])^2)/n
+# iterate over all intervals recursively
+while(length(q) > 0){
+  if(verbose) print(counter)
+  interval <- dequer::pop(q)
+  if(interval[2] - interval[1] < 2*delta+1) next()
+  interval_list <- .truncate(interval, random_intervals)
+  res_list <- lapply(interval_list, function(x){
+    .find_breakpoint(data = data, interval = x, delta = delta,
+                     max_candidates = max_candidates,
+                     data_length_func = data_length_func,
+                     compute_cusum_func = compute_cusum_func,
+                     verbose = verbose, lambda = lambda)})
+  res <- res_list[[which.max(sapply(res_list, function(x){x$val}))]]
 
-  loss - (loss1+loss2)
-})
+  # if passes threshold, recurse
+  if(res$val >= tau_function(data = data, interval = interval)){
+    b_vec <- c(b_vec, res$b)
+    if(verbose) print(paste0("Pushing ", interval[1], " - ", res$b, " - ", interval[2]))
+    dequer::pushback(q, c(interval[1], res$b))
+    dequer::pushback(q, c(res$b+1, interval[2]))
+  }
 
-print(res)
+  counter <- counter+1
+}
+
+#########
+# investigating the .find_breakpoint...
+interval = interval_list[[1]]
+stopifnot(interval[2] > interval[1])
+if(interval[2] - interval[1] < 2*delta+1) return(list(val = NA, b = NA))
+n <- data_length_func(data)
+
+seq_vec <- (interval[1]+delta):(interval[2]-1-delta)
+
+# if too many candidates, cut in half
+if(!is.na(max_candidates) && length(seq_vec) > max_candidates){
+  seq_vec <- sort(intersect(seq_vec, seq(delta, n - delta, by = delta)))
+}
+
+
+
