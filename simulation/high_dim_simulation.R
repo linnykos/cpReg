@@ -99,7 +99,7 @@ criterion <- function(dat, vec, y){
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
-# set.seed(2); criterion(rule(paramMat[2,]), paramMat[2,], 2)
+# set.seed(2); criterion(rule(paramMat[13,]), paramMat[13,], 2)
 
 ###########################
 

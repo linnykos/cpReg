@@ -28,6 +28,7 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
 #' @param X \code{n} by \code{d} matrix
 #' @param y length \code{n} vector
 #' @param partition vector with values between 0 and 1
+#' @param return_refit boolean
 #'
 #' @return numeric
 #' @export
@@ -47,7 +48,7 @@ oracle_tune_grouplambda <- function(X, y, partition, return_refit = F){
     lambda <- .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
     fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
                           group.multiplier = rep(1, d))
-    coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
+    coef_vec <- as.numeric(stats::coef(fit, lambda = lambda)[-1])
 
     .convert_grouplasso_to_cp(coef_vec, partition_idx, n, d)
   }
@@ -92,7 +93,16 @@ oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
   group_vec <- rep(1:d, times = k)
   fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
                         group.multiplier = rep(1, d))
-  coef_vec <- as.numeric(grpreg:::coef.grpreg(fit, lambda = lambda)[-1])
+
+  # do something if the lambda asked is too small
+  if(min(fit$lambda) > lambda){
+    lambda_seq <- seq(log(max(fit$lambda)), log(lambda/2), length.out = 100)
+    fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
+                          lambda = lambda_seq,
+                          group.multiplier = rep(1, d))
+  }
+
+  coef_vec <- as.numeric(stats::coef(fit, lambda = lambda)[-1])
 
   beta_list <- .convert_grouplasso_to_cp(coef_vec, partition, n, d, as_list = T)
   beta_mat <- .convert_grouplasso_to_cp(coef_vec, partition, n, d)

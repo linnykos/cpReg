@@ -12,6 +12,8 @@ oracle_tune_grouplambda(X, y, partition, return_refit = F)
 \item{y}{length \code{n} vector}
 
 \item{partition}{vector with values between 0 and 1}
+
+\item{return_refit}{boolean}
 }
 \value{
 numeric

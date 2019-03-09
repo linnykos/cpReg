@@ -46,6 +46,21 @@ test_that(".high_dim_infeasible_subroutine works", {
   expect_true(all(names(res) == c("obj_val", "coef_list")))
 })
 
+test_that(".high_dim_infeasible_subroutine doesn't crash when lambda asked is too small", {
+  set.seed(10)
+  true_partition <- c(0,0.5,1)
+  n <- 100
+  dat <- create_data(list(rep(10, 3), rep(-10, 3)), true_partition * n)
+  lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
+  maxl2 <- .l2norm(rep(10, 3))
+
+  res <- .high_dim_infeasible_subroutine(dat$X, dat$y, 0.0005, maxl2, true_partition * n)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+  expect_true(all(names(res) == c("obj_val", "coef_list")))
+})
+
 #############
 
 ## high_dim_infeasible_estimate is correct
