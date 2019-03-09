@@ -12,7 +12,7 @@ true_partition <- c(0,0.3,0.7,1)
 #############
 
 create_coef <- function(vec, full = F){
-  d <- 50
+  d <- 50 # d <- vec["d/n"]*vec["n"]
   beta1 <- c(rep(1, 10), rep(0, d-10))
   beta2 <- c(rep(0, d-10), rep(1, 10))
   lis <- list(beta1 = beta1, beta2 = beta2)
@@ -20,7 +20,7 @@ create_coef <- function(vec, full = F){
   if(!full){
     lis
   } else {
-    mat <- matrix(0, nrow = vec["n"], ncol = vec["d/n"]*vec["n"])
+    mat <- matrix(0, nrow = vec["n"], ncol = d)
     idx <- round(true_partition*vec["n"])
     for(i in 1:(length(idx)-1)){
       zz <- i %% 2; if(zz == 0) zz <- 2
