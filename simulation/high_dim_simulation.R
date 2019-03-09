@@ -42,9 +42,9 @@ criterion <- function(dat, vec, y){
 
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
-                                factor = 3/4)
+                                factor = 1/2)
   gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
-                                    factor = 1/2)
+                                    factor = 3/8)
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
 
   screeningtau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
@@ -99,7 +99,7 @@ criterion <- function(dat, vec, y){
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
-# set.seed(2); criterion(rule(paramMat[13,]), paramMat[13,], 2)
+# set.seed(1); criterion(rule(paramMat[10,]), paramMat[10,], 1)
 
 ###########################
 
