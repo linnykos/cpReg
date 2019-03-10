@@ -79,8 +79,8 @@ test_that("high_dim_infeasible_estimate works", {
                                       delta)
 
   expect_true(is.list(res))
-  expect_true(length(res) == 2)
-  expect_true(all(names(res) == c("partition", "coef_list")))
+  expect_true(length(res) == 3)
+  expect_true(all(names(res) == c("partition", "coef_list", "obj_val")))
 })
 
 ##############

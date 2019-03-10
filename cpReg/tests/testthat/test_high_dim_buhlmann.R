@@ -36,3 +36,20 @@ test_that("high_dim_buhlmann_estimate works", {
   expect_true(is.list(res))
   expect_true(length(res) == 2)
 })
+
+###############
+
+## oracle_tune_gamma_range is correct
+
+test_that("oracle_tune_gamma_range works", {
+  set.seed(10)
+  n <- 100
+  partition <- c(0, 0.5, 1)
+  dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), round(partition*n))
+  lambda <- oracle_tune_lambda(dat$X, dat$y, partition)
+
+  res <- oracle_tune_gamma_range(dat$X, dat$y, lambda, partition, verbose = F)
+
+  expect_true(is.list(res))
+  expect_true(all(names(res) == c("gamma", "min_gamma", "max_gamma")))
+})

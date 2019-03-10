@@ -59,6 +59,55 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
   res*factor
 }
 
+oracle_tune_gamma_range <- function(X, y, lambda, partition, delta = 10, min_gamma = 0.01,
+                                    max_gamma = 1000, max_iter = 10, verbose = T){
+  k <- length(partition)-1
+  partition_idx <- round(nrow(X)*partition)
+
+  # find a suitable lower and upper startpoint
+  min_gamma <- .initial_gamma_overshoot(X, y, lambda, k, min_gamma, delta = delta, smaller = T,
+                                        verbose = verbose)
+  max_gamma <- .initial_gamma_overshoot(X, y, lambda, k, max_gamma, delta = delta, smaller = F,
+                                        verbose = verbose)
+
+  # find a suitable starting point
+  res <- .initialize_gamma_binarysearch(X, y, lambda, k = k, delta = delta,
+                                        min_gamma = min_gamma, max_gamma = max_gamma,
+                                        max_iter = max_iter, verbose = verbose)
+
+  min_gamma_vec <- res$min_gamma_vec; max_gamma_vec <- res$max_gamma_vec; gamma_vec <- res$gamma
+  iter <- 1
+
+  # throttle on both sides
+  while(iter <= max_iter){
+    try_min <- mean(c(max(min_gamma_vec), min(gamma_vec)))
+    res <-  high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_min,
+                                           delta = delta)
+    if(length(res$partition) - 1 > k){
+      min_gamma_vec <- c(min_gamma_vec, try_min)
+    } else if(length(res$partition) - 1 == k){
+      gamma_vec <- c(gamma_vec, try_min)
+    } else stop()
+
+    try_max <- mean(c(min(max_gamma_vec), max(gamma_vec)))
+    res <-  high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_max,
+                                           delta = delta)
+
+    if(length(res$partition) - 1 < k){
+      max_gamma_vec <- c(max_gamma_vec, try_max)
+    } else if(length(res$partition) - 1 == k){
+      gamma_vec <- c(gamma_vec, try_max)
+    } else stop()
+
+    iter <- iter + 1
+    if(verbose) print(list(min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec, gamma_vec = gamma_vec))
+  }
+
+  stopifnot(max(min_gamma_vec) < min(gamma_vec), min(max_gamma_vec) > max(gamma_vec))
+
+  list(gamma = range(gamma_vec), min_gamma = max(min_gamma_vec), max_gamma = min(max_gamma_vec))
+}
+
 #' Tune screening tau for high dimensional infeasible (oracle)
 #'
 #' @param X \code{n} by \code{d} matrix
@@ -108,4 +157,51 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
   len <- interval[2] - interval[1]
   beta <- .lasso_regression(X, y, lambda*sqrt(len))
   -1*(as.numeric(.l2norm(X%*%beta - y)^2)/nrow(data$X) + gamma)
+}
+
+.initial_gamma_overshoot <- function(X, y, lambda, k, gamma, delta = 10, smaller = T,
+                                     verbose = T){
+  while(TRUE){
+    if(verbose) print(paste0("Still trying to initialize ", ifelse(smaller, "minimum", "maximum"), " gamma"))
+    res_low <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = gamma,
+                                          delta = delta)
+    if(smaller){
+      if(length(res_low$partition)-1 <= k) gamma <- gamma/2 else break()
+    }
+
+    if(!smaller){
+      if(length(res_low$partition)-1 >= k) gamma <- gamma*2 else break()
+    }
+  }
+
+  gamma
+}
+
+.initialize_gamma_binarysearch <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
+                                           max_gamma = 1000, max_iter = 10, verbose = T){
+  min_gamma_vec <- min_gamma; max_gamma_vec <- max_gamma; gamma <- numeric(0)
+  iter <- 1
+
+  # phase 1: find ONE suitable gamma
+  while(iter <= max_iter){
+    try_gamma <- mean(c(max(min_gamma_vec), min(max_gamma_vec)))
+    res <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_gamma,
+                                          delta = delta)
+
+    if(verbose) print(paste0("Trying ", try_gamma, " resulting in ", length(res$partition)-1))
+
+    if(length(res$partition)-1 == k) {
+      gamma <- try_gamma; break()
+    } else if(length(res$partition)-1 > k){
+      min_gamma_vec <- c(try_gamma, min_gamma_vec)
+    } else {
+      max_gamma_vec <- c(try_gamma, max_gamma_vec)
+    }
+
+    iter <- iter + 1
+  }
+
+  stopifnot(length(gamma) == 1)
+
+  list(gamma = gamma, min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec)
 }
