@@ -59,6 +59,20 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
   res*factor
 }
 
+#' Tune gamma range (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param k numeric
+#' @param delta numeric
+#' @param min_gamma numeric
+#' @param max_gamma numeric
+#' @param max_iter numeric
+#' @param verbose boolean
+#'
+#' @return list
+#' @export
 oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
                                     max_gamma = 1000, max_iter = 10, verbose = T){
 
