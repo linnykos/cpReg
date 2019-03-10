@@ -84,8 +84,7 @@ oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.0
 
   # find a suitable starting point
   res <- .initialize_gamma_binarysearch(X, y, lambda, k = k, delta = delta,
-                                        min_gamma = min_gamma, max_gamma = max_gamma,
-                                        max_iter = max_iter, verbose = verbose)
+                                        min_gamma = min_gamma, max_gamma = max_gamma, verbose = verbose)
 
   min_gamma_vec <- res$min_gamma_vec; max_gamma_vec <- res$max_gamma_vec; gamma_vec <- res$gamma
   if(length(gamma_vec) == 0) return(list(gamma = NA, min_gamma = max(min_gamma_vec), max_gamma = min(max_gamma_vec)))
@@ -191,12 +190,11 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 }
 
 .initialize_gamma_binarysearch <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
-                                           max_gamma = 1000, max_iter = 10, verbose = T){
+                                           max_gamma = 1000, tol = 1e-3, verbose = T){
   min_gamma_vec <- min_gamma; max_gamma_vec <- max_gamma; gamma <- numeric(0)
-  iter <- 1
 
   # phase 1: find ONE suitable gamma
-  while(iter <= max_iter){
+  while(abs(max(min_gamma_vec) - min(max_gamma_vec)) > tol){
     try_gamma <- mean(c(max(min_gamma_vec), min(max_gamma_vec)))
     res <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_gamma,
                                           delta = delta)
@@ -210,8 +208,6 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
     } else {
       max_gamma_vec <- c(try_gamma, max_gamma_vec)
     }
-
-    iter <- iter + 1
   }
 
   list(gamma = gamma, min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec)

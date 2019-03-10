@@ -44,8 +44,11 @@ criterion <- function(dat, vec, y){
   delta <- max(round(vec["n"]/20), 10)
   k <- length(true_partition)-1
 
-  cpReg::oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,
-                                 verbose = F, max_iter = 10)
+  res <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,
+                                 verbose = T, max_iter = 10)
+
+  list(lambda = lambda, gamma = res$gamma, min_gamma = res$min_gamma,
+       max_gamma = res$max_gamma)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
