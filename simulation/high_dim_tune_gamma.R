@@ -41,7 +41,7 @@ criterion <- function(dat, vec, y){
   true_beta <- create_coef(vec, full = T)
 
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
-  delta <- max(round(vec["n"]/10), 10)
+  delta <- max(round(vec["n"]/20), 10)
   k <- length(true_partition)-1
 
   cpReg::oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,

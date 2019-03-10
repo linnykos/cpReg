@@ -88,6 +88,7 @@ oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.0
                                         max_iter = max_iter, verbose = verbose)
 
   min_gamma_vec <- res$min_gamma_vec; max_gamma_vec <- res$max_gamma_vec; gamma_vec <- res$gamma
+  if(length(gamma_vec) == 0) return(list(gamma = NA, min_gamma = max(min_gamma_vec), max_gamma = min(max_gamma_vec)))
   iter <- 1
 
   # throttle on both sides
@@ -212,8 +213,6 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 
     iter <- iter + 1
   }
-
-  stopifnot(length(gamma) == 1)
 
   list(gamma = gamma, min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec)
 }
