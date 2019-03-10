@@ -59,10 +59,8 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
   res*factor
 }
 
-oracle_tune_gamma_range <- function(X, y, lambda, partition, delta = 10, min_gamma = 0.01,
+oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
                                     max_gamma = 1000, max_iter = 10, verbose = T){
-  k <- length(partition)-1
-  partition_idx <- round(nrow(X)*partition)
 
   # find a suitable lower and upper startpoint
   min_gamma <- .initial_gamma_overshoot(X, y, lambda, k, min_gamma, delta = delta, smaller = T,

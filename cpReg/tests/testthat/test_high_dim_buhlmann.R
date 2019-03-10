@@ -47,8 +47,9 @@ test_that("oracle_tune_gamma_range works", {
   partition <- c(0, 0.5, 1)
   dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), round(partition*n))
   lambda <- oracle_tune_lambda(dat$X, dat$y, partition)
+  k <- length(partition)-1
 
-  res <- oracle_tune_gamma_range(dat$X, dat$y, lambda, partition, verbose = F)
+  res <- oracle_tune_gamma_range(dat$X, dat$y, lambda, k, verbose = F)
 
   expect_true(is.list(res))
   expect_true(all(names(res) == c("gamma", "min_gamma", "max_gamma")))
