@@ -45,7 +45,7 @@ criterion <- function(dat, vec, y){
   k <- length(true_partition)-1
 
   cpReg::oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,
-                                 verbose = F)
+                                 verbose = F, max_iter = 10)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
@@ -54,7 +54,7 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 100,
+                                        paramMat = paramMat, trials = 50,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)

@@ -103,6 +103,10 @@ wbs <- function(data,
     seq_vec <- sort(intersect(seq_vec, seq(delta, n - delta, by = delta)))
   }
 
+  if(length(seq_vec) == 0){
+    return(list(val = NA, b = NA))
+  }
+
   vec <- sapply(seq_vec, function(x){
     compute_cusum_func(data, interval[1], interval[2], x, ...)
   })
