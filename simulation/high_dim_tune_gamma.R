@@ -65,3 +65,5 @@ res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         filepath = filename_tmp,
                                         verbose = T)
 save.image(filename)
+
+## res <- res[which(sapply(res, length) !=0)]; sapply(res, function(zz){sum(sapply(zz, function(y){!all(is.na(y$gamma))}))/length(zz)})

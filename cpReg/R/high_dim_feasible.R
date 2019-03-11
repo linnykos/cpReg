@@ -47,7 +47,7 @@ oracle_tune_lambda <- function(X, y, partition){
     fit <- glmnet::cv.glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
                       y[(partition_idx[x]+1):partition_idx[x+1]],
                       intercept = F, grouped = F)
-    fit$lambda.1se/sqrt(partition_idx[x+1]-partition_idx[x])
+    fit$lambda.min/sqrt(partition_idx[x+1]-partition_idx[x])
   }))
 }
 
