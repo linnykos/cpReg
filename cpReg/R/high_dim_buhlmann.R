@@ -159,7 +159,10 @@ oracle_tune_gamma_hausdorff <- function(X, y, lambda, partition,
     hausdorff(tmp, round(partition*n))
   })
 
-  stopifnot(!all(is.na(quality_vec)))
+  if(all(is.na(quality_vec))){
+    max(sapply(res, function(i){i$min_gamma}))
+  }
+
   idx <- which.min(quality_vec)
   mean(res[[idx]]$gamma)
 }
