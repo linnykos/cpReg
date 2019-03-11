@@ -48,6 +48,7 @@ criterion <- function(dat, vec, y){
 
   res <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,
                                  verbose = F, max_iter = 10)
+  print(res)
 
   list(lambda = lambda, gamma = res$gamma, min_gamma = res$min_gamma,
        max_gamma = res$max_gamma)
@@ -60,7 +61,7 @@ criterion <- function(dat, vec, y){
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = 20,
-                                        cores = 15, as_list = T,
+                                        cores = 20, as_list = T,
                                         filepath = filename_tmp,
                                         verbose = T)
 save.image(filename)
