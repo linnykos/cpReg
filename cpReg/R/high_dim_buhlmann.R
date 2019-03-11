@@ -160,7 +160,7 @@ oracle_tune_gamma_hausdorff <- function(X, y, lambda, partition,
   })
 
   if(all(is.na(quality_vec))){
-    max(sapply(res, function(i){i$min_gamma}))
+    max(sapply(res, function(i){i$min_gamma}), na.rm = T)
   }
 
   idx <- which.min(quality_vec)
