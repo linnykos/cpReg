@@ -6,18 +6,21 @@
 #' @param gamma numeric
 #' @param delta numeric
 #' @param max_candidates numeric
+#' @param max_changepoints numeric
 #' @param verbose boolean
 #'
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
 high_dim_buhlmann_estimate <- function(X, y, lambda, gamma,
                                        delta = 10, max_candidates = NA,
+                                       max_changepoints = NA,
                                        verbose = F){
   data <- list(X = X, y = y)
   partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
                    compute_cusum_func = .compute_regression_buhlmann,
                    tau_function = .buhlmann_threshold,
                    M = 0, delta = delta, max_candidates = 10,
+                   max_changepoints = max_changepoints,
                    verbose = verbose,
                    lambda = lambda, gamma = gamma)
 
@@ -64,7 +67,7 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
 #' @param X \code{n} by \code{d} matrix
 #' @param y length \code{n} vector
 #' @param lambda numeric
-#' @param k numeric
+#' @param k the number of desired segments (number of changepoints + 1)
 #' @param delta numeric
 #' @param min_gamma numeric
 #' @param max_gamma numeric
@@ -118,6 +121,47 @@ oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.0
   stopifnot(max(min_gamma_vec) < min(gamma_vec), min(max_gamma_vec) > max(gamma_vec))
 
   list(gamma = range(gamma_vec), min_gamma = max(min_gamma_vec), max_gamma = min(max_gamma_vec))
+}
+
+#' Tune gamma to minimize hausdorff distance (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param partition vector with values between 0 and 1
+#' @param k_vec numeric vector of the number of desired segments (number of changepoints + 1)
+#' @param delta numeric
+#' @param min_gamma numeric
+#' @param max_gamma numeric
+#' @param verbose boolean
+#'
+#' @return numeric
+#' @export
+oracle_tune_gamma_hausdorff <- function(X, y, lambda, partition,
+                                        k_vec,
+                                        delta = 10, min_gamma = 0.01,
+                                        max_gamma = 1000,
+                                        verbose = F){
+  n <- nrow(X)
+  res <- lapply(k_vec, function(i){
+    if(verbose) print(i)
+    oracle_tune_gamma_range(X, y, lambda, i, delta = delta, min_gamma = min_gamma,
+                            max_gamma = max_gamma, verbose = F)
+  })
+
+  quality_vec <- sapply(1:length(res), function(i){
+    if(verbose) print(i)
+    if(any(is.na(res[[i]]$gamma))) return(NA)
+
+    gamma <- mean(res[[i]]$gamma)
+    tmp <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = gamma,
+                                      delta = delta)$partition
+    hausdorff(tmp, round(partition*n))
+  })
+
+  stopifnot(!all(is.na(quality_vec)))
+  idx <- which.min(quality_vec)
+  mean(res[[idx]]$gamma)
 }
 
 #' Tune screening tau for high dimensional infeasible (oracle)

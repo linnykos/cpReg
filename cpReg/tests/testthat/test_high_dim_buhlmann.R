@@ -37,6 +37,67 @@ test_that("high_dim_buhlmann_estimate works", {
   expect_true(length(res) == 2)
 })
 
+test_that("high_dim_buhlmann_estimate has working max_changepoint argument", {
+  paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
+                                    1/2))
+  colnames(paramMat) <- c("n", "X_type", "d/n")
+
+  X_type_vec <- c("identity", "toeplitz", "equicorrelation")
+  true_partition <- c(0,0.3,0.7,1)
+
+  create_coef <- function(vec, full = F){
+    d <- 50 # d <- vec["d/n"]*vec["n"]
+    beta1 <- c(rep(1, 10), rep(0, d-10))
+    beta2 <- c(rep(0, d-10), rep(1, 10))
+    lis <- list(beta1 = beta1, beta2 = beta2)
+
+    if(!full){
+      lis
+    } else {
+      mat <- matrix(0, nrow = vec["n"], ncol = d)
+      idx <- round(true_partition*vec["n"])
+      for(i in 1:(length(idx)-1)){
+        zz <- i %% 2; if(zz == 0) zz <- 2
+        mat[(idx[i]+1):idx[i+1],] <- rep(lis[[zz]], each = idx[i+1]-idx[i])
+      }
+      mat
+    }
+  }
+
+  rule <- function(vec){
+    lis <- create_coef(vec, full = F)
+
+    create_data(list(lis$beta1, lis$beta2, lis$beta1), round(true_partition*vec["n"]),
+                       cov_type = X_type_vec[vec["X_type"]])
+  }
+
+  #####
+
+  set.seed(49)
+  vec <- paramMat[1,]
+  dat <- rule(vec)
+
+  true_beta <- create_coef(vec, full = T)
+
+  delta <- max(round(vec["n"]/10), 10)
+  lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
+  gamma_range <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = length(true_partition)-1, delta = delta,
+                                         verbose = F)
+
+  if(any(is.na(gamma_range$gamma))) gamma <- gamma_range$min_gamma else gamma <- mean(gamma_range$gamma)
+
+  res <- high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
+                                            verbose = F, max_candidates = NA, delta = delta)
+
+  expect_true(length(res$partition) - 1 > 3)
+
+  res2 <- high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
+                                     verbose = F, max_candidates = NA,
+                                     max_changepoints = 2, delta = delta)
+
+  expect_true(length(res2$partition) - 1 == 3)
+})
+
 ###############
 
 ## oracle_tune_gamma_range is correct

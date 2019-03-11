@@ -14,7 +14,7 @@ oracle_tune_gamma_range(X, y, lambda, k, delta = 10, min_gamma = 0.01,
 
 \item{lambda}{numeric}
 
-\item{k}{numeric}
+\item{k}{the number of desired segments (number of changepoints + 1)}
 
 \item{delta}{numeric}
 

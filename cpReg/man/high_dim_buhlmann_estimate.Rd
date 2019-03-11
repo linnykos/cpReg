@@ -5,7 +5,7 @@
 \title{High dimensional estimator - Buhlmann}
 \usage{
 high_dim_buhlmann_estimate(X, y, lambda, gamma, delta = 10,
-  max_candidates = NA, verbose = F)
+  max_candidates = NA, max_changepoints = NA, verbose = F)
 }
 \arguments{
 \item{X}{\code{n} by \code{d} matrix}
@@ -19,6 +19,8 @@ high_dim_buhlmann_estimate(X, y, lambda, gamma, delta = 10,
 \item{delta}{numeric}
 
 \item{max_candidates}{numeric}
+
+\item{max_changepoints}{numeric}
 
 \item{verbose}{boolean}
 }

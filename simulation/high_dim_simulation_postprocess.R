@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/high_dim_simulation.RData")
+load("../results/high_dim_simulation_cheatinggamma.RData")
 
 max_idx <- 10
 
@@ -25,6 +25,7 @@ for(i in 1:2){
 
 par(mfrow = c(1,2))
 col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+#black = high dim feasible, red = buhlmann, green infeasible
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
      main = "Sum of Beta L2 squared difference\n(Identity covariance)",
      xlab = "n", ylab = "Error")
@@ -95,34 +96,35 @@ for(i in 1:5){
 
 png("../figure/high_dimension_identity.png",
     height = 1500, width = 2500, res = 300, units = "px")
+column_idx <- c(1,2,5)
 par(mfrow = c(1,2))
-col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
-plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
+col_vec <- c(1,2,3); lty_vec <- rep(1,3)
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list[[1]][,column_idx])),
      main = "Sum of Beta L2 squared\ndifference (Identity covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:5){
-  points(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+for(i in 1:length(column_idx)){
+  points(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,column_idx[i]], col = col_vec[i],
          pch = 16, cex = 1)
-  lines(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
-        lwd = 2, lty = lty_vec[i])
-}
-
-col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
-plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list)),
-     main = "Hausdorff distance\n(Identity covariance)",
-     xlab = "n", ylab = "Error")
-for(i in 1:5){
-  points(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
-         pch = 16, cex = 1)
-  lines(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
+  lines(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,column_idx[i]], col = col_vec[i],
         lwd = 2, lty = lty_vec[i])
 }
 
 legend("topright",
-       c("Feasible", "Buhlmann", "Buhlmann - Screened",
-         "Infeasible", "Infeasible - Screened"),
-       cex = 0.7, col = c(1, 2, 2, 3, 3),
-       lty = c(1,1,2,1,2))
+       c("Feasible", "Buhlmann", "Infeasible"), col = c(1, 2, 3),
+       lty = c(1,1,1))
+
+col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list[[1]][,column_idx])),
+     main = "Hausdorff distance\n(Identity covariance)",
+     xlab = "n", ylab = "Error")
+for(i in 1:length(column_idx)){
+  points(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,column_idx[i]], col = col_vec[i],
+         pch = 16, cex = 1)
+  lines(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,column_idx[i]], col = col_vec[i],
+        lwd = 2, lty = lty_vec[i])
+}
+
+
 
 graphics.off()
 
