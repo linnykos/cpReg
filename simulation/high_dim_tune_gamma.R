@@ -60,7 +60,7 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 20,
+                                        paramMat = paramMat, trials = 100,
                                         cores = 20, as_list = T,
                                         filepath = filename_tmp,
                                         verbose = T)
