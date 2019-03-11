@@ -47,7 +47,7 @@ criterion <- function(dat, vec, y){
   k <- length(true_partition)-1
 
   res <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,
-                                 verbose = T, max_iter = 10)
+                                 verbose = F, max_iter = 10)
   print(res)
 
   list(lambda = lambda, gamma = res$gamma, min_gamma = res$min_gamma,
