@@ -1,6 +1,8 @@
 rm(list=ls())
 library(simulation)
 library(cpReg)
+filename <- "../results/high_dim_tune_gamma.RData"
+filename_tmp <- "../results/high_dim_tune_gamma_tmp.RData"
 
 paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
                                   1/2))
@@ -45,7 +47,7 @@ criterion <- function(dat, vec, y){
   k <- length(true_partition)-1
 
   res <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = k, delta = delta,
-                                 verbose = T, max_iter = 10)
+                                 verbose = F, max_iter = 10)
 
   list(lambda = lambda, gamma = res$gamma, min_gamma = res$min_gamma,
        max_gamma = res$max_gamma)
@@ -57,8 +59,8 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 50,
+                                        paramMat = paramMat, trials = 20,
                                         cores = 15, as_list = T,
-                                        filepath = "../results/high_dim_simulation_tmp.RData",
+                                        filepath = filename_tmp,
                                         verbose = T)
-save.image("../results/high_dim_simulation.RData")
+save.image(filename)

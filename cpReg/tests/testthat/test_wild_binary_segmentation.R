@@ -20,7 +20,7 @@ test_that(".find_breakpoint works", {
 
   res <- .find_breakpoint(dat, c(0, 100), delta = delta, max_candidates = max_candidates,
                           data_length_func = function(x){nrow(x$X)},
-                          compute_cusum_func = compute_cusum_func, verbose = verbose,
+                          compute_cusum_func = compute_cusum_func, verbose = F,
                           lambda = lambda)
 
   expect_true(is.list(res))

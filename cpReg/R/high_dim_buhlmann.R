@@ -172,8 +172,10 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 }
 
 .initial_gamma_overshoot <- function(X, y, lambda, k, gamma, delta = 10, smaller = T,
-                                     verbose = T){
-  while(TRUE){
+                                     verbose = T, max_iter = 10){
+  iter <- 1
+
+  while(iter <= max_iter){
     if(verbose) print(paste0("Still trying to initialize ", ifelse(smaller, "minimum", "maximum"), " gamma"))
     res_low <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = gamma,
                                           delta = delta)
@@ -184,17 +186,21 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
     if(!smaller){
       if(length(res_low$partition)-1 >= k) gamma <- gamma*2 else break()
     }
+
+    iter <- iter+1
   }
 
   gamma
 }
 
 .initialize_gamma_binarysearch <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
-                                           max_gamma = 1000, tol = 1e-3, verbose = T){
+                                           max_gamma = 1000, tol = 1e-3, verbose = T,
+                                           max_iter = 10){
   min_gamma_vec <- min_gamma; max_gamma_vec <- max_gamma; gamma <- numeric(0)
+  iter <- 1
 
   # phase 1: find ONE suitable gamma
-  while(abs(max(min_gamma_vec) - min(max_gamma_vec)) > tol){
+  while(abs(max(min_gamma_vec) - min(max_gamma_vec)) > tol & iter < max_iter){
     try_gamma <- mean(c(max(min_gamma_vec), min(max_gamma_vec)))
     res <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_gamma,
                                           delta = delta)
@@ -208,6 +214,8 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
     } else {
       max_gamma_vec <- c(try_gamma, max_gamma_vec)
     }
+
+    iter <- iter + 1
   }
 
   list(gamma = gamma, min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec)
