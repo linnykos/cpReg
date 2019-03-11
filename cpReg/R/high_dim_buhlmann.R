@@ -196,25 +196,27 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 ##################
 
 .compute_regression_buhlmann <- function(data, start, end, breakpoint, lambda, gamma){
+  n <- nrow(data$X)
   X1 <- data$X[(start+1):breakpoint,,drop = F]
   y1 <- data$y[(start+1):breakpoint]
   X2 <- data$X[(breakpoint+1):end,,drop = F]
   y2 <- data$y[(breakpoint+1):end]
 
-  beta1 <- .lasso_regression(X1, y1, lambda*sqrt(breakpoint-start))
-  beta2 <- .lasso_regression(X2, y2, lambda*sqrt(end-breakpoint))
+  beta1 <- .lasso_regression(X1, y1, n*lambda/sqrt(breakpoint-start))
+  beta2 <- .lasso_regression(X2, y2, n*lambda/sqrt(end-breakpoint))
 
   -1*(as.numeric(.l2norm(X1%*%beta1 - y1)^2)/nrow(data$X) +
     as.numeric(.l2norm(X2%*%beta2 - y2)^2)/nrow(data$X) + 2*gamma)
 }
 
 .buhlmann_threshold <- function(data, interval, lambda, gamma){
+  n <- nrow(data$X)
   stopifnot(interval[1] < interval[2])
   X <- data$X[(interval[1]+1):interval[2],,drop = F]
   y <- data$y[(interval[1]+1):interval[2]]
 
   len <- interval[2] - interval[1]
-  beta <- .lasso_regression(X, y, lambda*sqrt(len))
+  beta <- .lasso_regression(X, y, n*lambda/sqrt(len))
   -1*(as.numeric(.l2norm(X%*%beta - y)^2)/nrow(data$X) + gamma)
 }
 
