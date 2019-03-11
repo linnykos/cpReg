@@ -40,11 +40,14 @@ rule <- function(vec){
 criterion <- function(dat, vec, y){
   true_beta <- create_coef(vec, full = T)
 
+  delta <- max(round(vec["n"]/10), 10)
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
                                 factor = 1/2)
-  gamma <- cpReg::oracle_tune_gamma(dat$X, dat$y, lambda, true_partition,
-                                    factor = 3/8)
+  gamma_range <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = length(true_partition)-1, delta = delta,
+                                 verbose = F)
+  if(any(is.na(gamma_range$gamma))) gamma <- gamma_range$min_gamma else gamma <- mean(gamma_range$gamma)
+
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
 
   screeningtau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
@@ -52,7 +55,6 @@ criterion <- function(dat, vec, y){
 
   maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
   K <- 4
-  delta <- max(round(vec["n"]/10), 10)
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                     verbose = F, max_candidates = NA, delta = delta, M = 0)
@@ -95,7 +97,8 @@ criterion <- function(dat, vec, y){
                         partition2b, partition3b),
        parameters = list(lambda = lambda, tau = tau, gamma = gamma,
                          grouplambda = grouplambda, screeningtau = screeningtau,
-                         group_screeningtau = group_screeningtau))
+                         group_screeningtau = group_screeningtau),
+       gamma_range = gamma_range)
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
@@ -104,8 +107,8 @@ criterion <- function(dat, vec, y){
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = 100,
+                                        paramMat = paramMat, trials = 50,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)
-save.image("../results/high_dim_simulation.RData")
+save.image("../results/high_dim_simulation_cheatinggamma.RData")
