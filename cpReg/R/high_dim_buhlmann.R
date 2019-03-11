@@ -218,7 +218,5 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
     iter <- iter + 1
   }
 
-  stopifnot(length(gamma) == 1)
-
   list(gamma = gamma, min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec)
 }
