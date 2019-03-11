@@ -172,7 +172,7 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 }
 
 .initial_gamma_overshoot <- function(X, y, lambda, k, gamma, delta = 10, smaller = T,
-                                     verbose = T, max_iter = 10){
+                                     verbose = T, max_iter = 30){
   iter <- 1
 
   while(iter <= max_iter){
@@ -195,7 +195,7 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 
 .initialize_gamma_binarysearch <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
                                            max_gamma = 1000, tol = 1e-3, verbose = T,
-                                           max_iter = 10){
+                                           max_iter = 30){
   min_gamma_vec <- min_gamma; max_gamma_vec <- max_gamma; gamma <- numeric(0)
   iter <- 1
 
