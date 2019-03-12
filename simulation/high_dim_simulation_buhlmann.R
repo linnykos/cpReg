@@ -49,7 +49,6 @@ criterion <- function(dat, vec, y){
   res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
                                             verbose = F, max_candidates = NA, delta = delta)
 
-
   beta_mat2 <- cpReg::unravel(res2)
   beta_error2 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2[x,] - true_beta[x,])^2}))/vec["n"]
   haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*vec["n"]))
