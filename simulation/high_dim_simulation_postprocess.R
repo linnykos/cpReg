@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/high_dim_simulation_cheatinggamma.RData")
+load("../results/high_dim_simulation.RData")
 # res_want <- res
 # load("../results/high_dim_simulation_buhlmann.RData")
 # # replace the results
@@ -28,7 +28,7 @@ for(i in 1:length(res)){
 #format in matrices
 beta_mat_list <- vector("list", 2)
 for(i in 1:2){
-  mat <- matrix(0, nrow = 10, ncol = 5)
+  mat <- matrix(0, nrow = 10, ncol = 4)
   for(j in 1:10){
     mat[j,] <- apply(beta_list[[(i-1)*10+j]], 1, median)
   }
@@ -36,12 +36,12 @@ for(i in 1:2){
 }
 
 par(mfrow = c(1,2))
-col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+col_vec <- c(1,2,3,3); lty_vec <- c(1,1,1,2)
 #black = high dim feasible, red = buhlmann, green infeasible
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
      main = "Sum of Beta L2 squared difference\n(Identity covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:5){
+for(i in 1:4){
   points(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
          pch = 16, cex = 1)
   lines(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,i], col = col_vec[i],
@@ -51,7 +51,7 @@ for(i in 1:5){
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
      main = "Sum of Beta L2 squared difference\n(Toeplitz covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:5){
+for(i in 1:4){
   points(paramMat[1:max_idx,"n"], beta_mat_list[[2]][1:max_idx,i], col = col_vec[i],
          pch = 16, cex = 1)
   lines(paramMat[1:max_idx,"n"], beta_mat_list[[2]][1:max_idx,i], col = col_vec[i],
@@ -73,7 +73,7 @@ for(i in 1:length(res)){
 #format in matrices
 haus_mat_list <- vector("list", 2)
 for(i in 1:2){
-  mat <- matrix(0, nrow = 10, ncol = 5)
+  mat <- matrix(0, nrow = 10, ncol = 4)
   for(j in 1:10){
     mat[j,] <- apply(haus_list[[(i-1)*10+j]], 1, median)/paramMat[j,"n"]
   }
@@ -81,11 +81,11 @@ for(i in 1:2){
 }
 
 par(mfrow = c(1,2))
-col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
+col_vec <- c(1,2,3,3); lty_vec <- c(1,1,1,2)
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list)),
      main = "Hausdorff distance\n(Identity covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:5){
+for(i in 1:4){
   points(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
          pch = 16, cex = 1)
   lines(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,i], col = col_vec[i],
@@ -95,7 +95,7 @@ for(i in 1:5){
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list)),
      main = "Hausdorff distance\n(Toeplitz covariance)",
      xlab = "n", ylab = "Error")
-for(i in 1:5){
+for(i in 1:4){
   points(paramMat[1:max_idx,"n"], haus_mat_list[[2]][1:max_idx,i], col = col_vec[i],
          pch = 16, cex = 1)
   lines(paramMat[1:max_idx,"n"], haus_mat_list[[2]][1:max_idx,i], col = col_vec[i],
