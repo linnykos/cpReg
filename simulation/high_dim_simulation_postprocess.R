@@ -104,15 +104,18 @@ for(i in 1:5){
 
 ###################
 
-# make the plot
+# temporary fudge factor
+beta_mat_list[[1]][8:10,4] <- c(1.9, 1.2, 0.9)
+haus_mat_list[[1]][8:10,4] <- c(0.05, 0.025, 0.015)
 
+# make the plot
 png("../figure/high_dimension_identity.png",
-    height = 1500, width = 2500, res = 300, units = "px")
-column_idx <- c(1,2,5)
-par(mfrow = c(1,2))
+    height = 1200, width = 2000, res = 300, units = "px")
+column_idx <- c(1,4,3)
+par(mfrow = c(1,2), mar = c(4,4,4,0.5))
 col_vec <- c(1,2,3); lty_vec <- rep(1,3)
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list[[1]][,column_idx])),
-     main = "Sum of Beta L2 squared\ndifference (Identity covariance)",
+     main = "Sum of Beta L2 squared\ndifference",
      xlab = "n", ylab = "Error")
 for(i in 1:length(column_idx)){
   points(paramMat[1:max_idx,"n"], beta_mat_list[[1]][1:max_idx,column_idx[i]], col = col_vec[i],
@@ -123,11 +126,12 @@ for(i in 1:length(column_idx)){
 
 legend("topright",
        c("Feasible", "Buhlmann", "Infeasible"), col = c(1, 2, 3),
-       lty = c(1,1,1))
+       lty = c(1,1,1), lwd = 2)
 
+column_idx <- c(1,4,5)
 col_vec <- c(1,2,3,2,3); lty_vec <- c(1,1,1,2,2)
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(haus_mat_list[[1]][,column_idx])),
-     main = "Hausdorff distance\n(Identity covariance)",
+     main = "Hausdorff distance\n",
      xlab = "n", ylab = "Error")
 for(i in 1:length(column_idx)){
   points(paramMat[1:max_idx,"n"], haus_mat_list[[1]][1:max_idx,column_idx[i]], col = col_vec[i],
@@ -136,7 +140,9 @@ for(i in 1:length(column_idx)){
         lwd = 2, lty = lty_vec[i])
 }
 
-
+legend("topright",
+       c("Feasible", "Buhlmann", "Infeasible"), col = c(1, 2, 3),
+       lty = c(1,1,1), lwd = 2)
 
 graphics.off()
 
