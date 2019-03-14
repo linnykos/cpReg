@@ -45,8 +45,6 @@ criterion <- function(dat, vec, y){
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
                                 factor = 1/2)
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
-
-  screeningtau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
   group_screeningtau <-  cpReg::oracle_tune_group_screeningtau(dat$X, dat$y, true_partition)
 
   maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
@@ -72,29 +70,23 @@ criterion <- function(dat, vec, y){
 
   #### now see what changes after regression
 
-  partition2b <- cpReg::screening(beta_mat2, screeningtau, M = 0)
   partition3b <- cpReg::screening(beta_mat3, group_screeningtau, M = 0)
 
-  beta_mat2b <- cpReg::unravel(list(partition = partition2b,
-                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition2b/vec["n"])))
   beta_mat3b <- cpReg::unravel(list(partition = partition3b,
                                     coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition3b/vec["n"])))
 
-  beta_error2b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2b[x,] - true_beta[x,])^2}))/vec["n"]
   beta_error3b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat3b[x,] - true_beta[x,])^2}))/vec["n"]
 
-  haus2b <- cpReg::hausdorff(partition2b, round(true_partition*vec["n"]))
   haus3b <- cpReg::hausdorff(partition3b, round(true_partition*vec["n"]))
 
   list(beta_error = list(beta_error1, beta_error2, beta_error3,
-                         beta_error2b, beta_error3b),
-       haus = list(haus1, haus2, haus3, haus2b, haus3b),
+                         beta_error3b),
+       haus = list(haus1, haus2, haus3, haus3b),
        partition = list(res1$partition, res2$partition, res3$partition,
-                        partition2b, partition3b),
-       parameters = list(lambda = lambda, tau = tau, gamma = gamma,
-                         grouplambda = grouplambda, screeningtau = screeningtau,
-                         group_screeningtau = group_screeningtau),
-       gamma_range = gamma_range)
+                        partition3b),
+       parameters = list(lambda = lambda, tau = tau,
+                         grouplambda = grouplambda,
+                         group_screeningtau = group_screeningtau))
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
@@ -107,4 +99,4 @@ res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)
-save.image("../results/high_dim_simulation_cheatinggamma.RData")
+save.image("../results/high_dim_simulation.RData")
