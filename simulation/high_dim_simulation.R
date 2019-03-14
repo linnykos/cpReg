@@ -44,10 +44,6 @@ criterion <- function(dat, vec, y){
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
                                 factor = 1/2)
-  gamma_range <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = length(true_partition)-1, delta = delta,
-                                 verbose = F)
-  if(any(is.na(gamma_range$gamma))) gamma <- gamma_range$min_gamma else gamma <- mean(gamma_range$gamma)
-
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
 
   screeningtau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
