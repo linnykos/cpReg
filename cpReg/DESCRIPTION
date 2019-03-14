@@ -12,7 +12,8 @@ Imports:
     glmnet,
     dequer,
     MASS,
-    grpreg
+    grpreg,
+    data.tree
 Suggests:
     testthat
 RoxygenNote: 6.1.1

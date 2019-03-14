@@ -36,7 +36,7 @@ test_that(".high_dim_infeasible_subroutine works", {
   true_partition <- c(0,0.5,1)
   n <- 100
   dat <- create_data(list(rep(10, 3), rep(-10, 3)), true_partition * n)
-  lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
+  lambda <- oracle_tune_grouplambda(dat$X, dat$y, true_partition)
   maxl2 <- .l2norm(rep(10, 3))
 
   res <- .high_dim_infeasible_subroutine(dat$X, dat$y, lambda, maxl2, true_partition * n)

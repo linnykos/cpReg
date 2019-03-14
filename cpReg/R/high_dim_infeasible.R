@@ -92,6 +92,7 @@ oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
   n <- nrow(X); d <- ncol(X); k <- length(partition)-1
   X_new <- .reformat_covariates(X, partition)
   group_vec <- rep(1:d, times = k)
+  # warning: grpreg is not able to turn off the intercept
   fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
                         group.multiplier = rep(1, d))
 

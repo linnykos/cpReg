@@ -4,7 +4,7 @@
 \alias{high_dim_buhlmann_estimate}
 \title{High dimensional estimator - Buhlmann}
 \usage{
-high_dim_buhlmann_estimate(X, y, lambda, gamma, delta = 10,
+high_dim_buhlmann_estimate(X, y, lambda, k, delta = 10,
   max_candidates = NA, max_changepoints = NA, verbose = F)
 }
 \arguments{
@@ -14,7 +14,7 @@ high_dim_buhlmann_estimate(X, y, lambda, gamma, delta = 10,
 
 \item{lambda}{numeric}
 
-\item{gamma}{numeric}
+\item{k}{numeric}
 
 \item{delta}{numeric}
 

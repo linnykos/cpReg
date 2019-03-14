@@ -58,7 +58,7 @@ criterion <- function(dat, vec, y){
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau,
                                     verbose = F, max_candidates = NA, delta = delta, M = 0)
-  res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
+  res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, k = 2,
                                             verbose = F, max_candidates = NA, delta = delta)
   res3 <- cpReg::high_dim_infeasible_estimate(dat$X, dat$y, grouplambda, maxl2, K, delta = delta)
 
