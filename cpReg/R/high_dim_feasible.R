@@ -3,6 +3,7 @@
 #' @param X \code{n} by \code{d} matrix
 #' @param y length \code{n} vector
 #' @param lambda numeric
+#' @param K numeric
 #' @param tau numeric
 #' @param M numeric
 #' @param delta numeric
@@ -60,7 +61,7 @@ oracle_tune_lambda <- function(X, y, partition){
     fit <- glmnet::cv.glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
                       y[(partition_idx[x]+1):partition_idx[x+1]],
                       intercept = F, grouped = F)
-    fit$lambda.1se*sqrt(partition_idx[x+1]-partition_idx[x])
+    .glmnet_to_cp(fit$lambda.1se, partition_idx[x+1]-partition_idx[x])
   }))
 }
 
@@ -99,8 +100,8 @@ oracle_tune_tau <- function(X, y, lambda, partition, factor = 3/4){
   X2 <- data$X[(breakpoint+1):end,,drop = F]
   y2 <- data$y[(breakpoint+1):end]
 
-  beta1 <- .lasso_regression(X1, y1, lambda/sqrt(breakpoint-start))
-  beta2 <- .lasso_regression(X2, y2, lambda/sqrt(end-breakpoint))
+  beta1 <- .lasso_regression(X1, y1, .cp_to_glmnet(lambda, breakpoint-start))
+  beta2 <- .lasso_regression(X2, y2, .cp_to_glmnet(lambda, end-breakpoint))
 
   .l2norm(sqrt((breakpoint - start)*(end-breakpoint)/(end-start))*(beta1 - beta2))
 }
@@ -121,7 +122,7 @@ oracle_tune_tau <- function(X, y, lambda, partition, factor = 3/4){
     fit <- glmnet::glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
                           y[(partition_idx[x]+1):partition_idx[x+1]],
                           intercept = F)
-    glmnet::coef.glmnet(fit, s = lambda/sqrt(partition_idx[x+1]-partition_idx[x]))[-1]
+    glmnet::coef.glmnet(fit, s = .cp_to_glmnet(lambda, partition_idx[x+1]-partition_idx[x]))[-1]
   })
 }
 

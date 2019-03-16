@@ -34,8 +34,8 @@ high_dim_buhlmann_estimate <- function(X, y, lambda, K,
   X2 <- data$X[(breakpoint+1):end,,drop = F]
   y2 <- data$y[(breakpoint+1):end]
 
-  beta1 <- .lasso_regression(X1, y1, lambda/sqrt(breakpoint-start))
-  beta2 <- .lasso_regression(X2, y2, lambda/sqrt(end-breakpoint))
+  beta1 <- .lasso_regression(X1, y1, .cp_to_glmnet(lambda, breakpoint-start))
+  beta2 <- .lasso_regression(X2, y2, .cp_to_glmnet(lambda, end-breakpoint))
 
   -1*(as.numeric(.l2norm(X1%*%beta1 - y1)^2) +
         as.numeric(.l2norm(X2%*%beta2 - y2)^2))
