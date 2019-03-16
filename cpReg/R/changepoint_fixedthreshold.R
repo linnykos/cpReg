@@ -1,10 +1,9 @@
 wbs <- function(data,
                 data_length_func,
                 compute_cusum_func,
-                tau_function, M = 100, delta = 1,
+                tau_function, M = 0, delta = 1,
                 max_candidates = NA,
                 verbose = F,
-                max_changepoints = NA,
                 ...){
   # initialize
   n <- data_length_func(data)
@@ -39,8 +38,6 @@ wbs <- function(data,
     }
 
     counter <- counter+1
-
-    if(!is.na(max_changepoints) && length(b_vec) >= max_changepoints) break()
   }
 
   c(0, sort(b_vec), n)

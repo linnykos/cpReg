@@ -18,7 +18,7 @@ test_that(".compute_regression_buhlmann works", {
 test_that("high_dim_buhlmann_estimate works", {
   set.seed(10)
   dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
-  res <- high_dim_buhlmann_estimate(dat$X, dat$y, 0.1, k = 2)
+  res <- high_dim_buhlmann_estimate(dat$X, dat$y, lambda = 0.1, K = 2)
 
   expect_true(is.list(res))
   expect_true(length(res) == 2)

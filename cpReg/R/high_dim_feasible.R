@@ -7,25 +7,35 @@
 #' @param M numeric
 #' @param delta numeric
 #' @param max_candidates numeric
-#' @param max_changepoints numeric
 #' @param verbose boolean
 #'
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
-high_dim_feasible_estimate <- function(X, y, lambda, tau, M = 100,
+high_dim_feasible_estimate <- function(X, y, lambda, K = NA, tau = NA,
+                                       M = 0,
                                        delta = 10, max_candidates = NA,
-                                       max_changepoints = NA,
                                        verbose = F){
-  tau_function <- function(data, interval, ...){
-    tau
-  }
-
+  stopifnot(!is.na(K) | !is.na(tau))
   data <- list(X = X, y = y)
-  partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
-      compute_cusum_func = .compute_regression_cusum,
-      tau_function = tau_function, M = M, delta = delta, max_candidates = max_candidates,
-      max_changepoints = max_changepoints,
-      verbose = verbose, lambda = lambda)
+
+  if(!is.na(K)){
+    partition <- cp_fixedstep(data, data_length_func = function(x){nrow(x$X)},
+                              compute_cusum_func = .compute_regression_cusum,
+                              K = K, delta = delta, max_candidates = max_candidates,
+                              verbose = verbose, lambda = lambda)
+
+  } else {
+    stopifnot(!is.na(tau))
+    tau_function <- function(data, interval, ...){
+      tau
+    }
+
+    partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
+                     compute_cusum_func = .compute_regression_cusum,
+                     tau_function = tau_function, M = M, delta = delta,
+                     max_candidates = max_candidates,
+                     verbose = verbose, lambda = lambda)
+  }
 
   n <- nrow(X)
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))

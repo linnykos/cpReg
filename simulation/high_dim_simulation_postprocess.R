@@ -1,17 +1,5 @@
 rm(list=ls())
 load("../results/high_dim_simulation.RData")
-# res_want <- res
-# load("../results/high_dim_simulation_buhlmann.RData")
-# # replace the results
-# for(i in 1:length(res_want)){
-#   for(j in 1:length(res_want[[i]])){
-#     res_want[[i]][[j]]$beta_error[[2]] <- res[[i]][[j]]$beta_error[[1]]
-#     res_want[[i]][[j]]$haus[[2]] <- res[[i]][[j]]$haus[[1]]
-#     res_want[[i]][[j]]$partition[[2]] <- res[[i]][[j]]$partition[[1]]
-#     res_want[[i]][[j]]$parameters$gamma <- res[[i]][[j]]$parameters$gamma
-#   }
-# }
-# res <- res_want
 
 max_idx <- 10
 
