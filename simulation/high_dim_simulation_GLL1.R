@@ -1,7 +1,7 @@
 rm(list=ls())
 library(simulation)
 library(cpReg)
-load("../simulation/high_dim_simulation_GLL1.R")
+source("../simulation/SGL_solver.R")
 
 paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
                                   1/2))
@@ -40,24 +40,26 @@ rule <- function(vec){
 
 criterion <- function(dat, vec, y){
   lambda2 <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
-  tau2 <- oracle_tune_screeningtau(X, y, lambda2, true_partition)
+  tau2 <- oracle_tune_screeningtau(dat$X, dat$y, lambda2, true_partition)
 
   K = 2
   S = 20
+
+  n <- nrow(dat$X); p <- ncol(dat$X)
 
   lambda <- 5*sqrt(K*log(p*n))
   gamma <- 5*sqrt(n*S*log(p))
 
   res4 <- GLL1_solver(dat$X, dat$y, lambda = lambda, gamma = gamma)
 
-  beta_error4 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(res4[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_error4 <- sum(sapply(1:n, function(x){cpReg:::.l2norm(res4[x,] - true_beta[x,])^2}))/n
 
-  partition4b <- screening(zz, tau = tau2, M = 0)
-  haus4b <- cpReg::hausdorff(partition4b, round(true_partition*vec["n"]))
+  partition4b <- cpReg::screening(res4, tau = tau2, M = 0)
+  haus4b <- cpReg::hausdorff(partition4b, round(true_partition*n))
 
-  beta_mat4b <- unravel(list(partition = partition4b,
-                             coef_list = .refit_high_dim(dat$X, dat$y, lambda2, partition4b/vec["n"])))
-  beta_error4b <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat4b[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_mat4b <- cpReg::unravel(list(partition = partition4b,
+                             coef_list = .refit_high_dim(dat$X, dat$y, lambda2, partition4b/n)))
+  beta_error4b <- sum(sapply(1:n, function(x){cpReg:::.l2norm(beta_mat4b[x,] - true_beta[x,])^2}))/n
 
   list(beta_error = list(beta_error4, beta_error4b),
        haus = list(haus4b),

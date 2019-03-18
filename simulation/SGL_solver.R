@@ -16,7 +16,7 @@ SGL_solver <- function(X, y, lambda = NA){
 }
 
 #group lasso, L1
-GLL1_solver <- function(X, y){
+GLL1_solver <- function(X, y, lambda = lambda, gamma = gamma){
   p <- ncol(X); n <- nrow(X); X <- t(X)
 
   beta <- CVXR::Variable(n,p)
