@@ -16,10 +16,8 @@ SGL_solver <- function(X, y, lambda = NA){
 }
 
 #group lasso, L1
-GLL1_solver <- function(X, y, K = NA, S = NA, lambda = NA, gamma = NA){
+GLL1_solver <- function(X, y){
   p <- ncol(X); n <- nrow(X); X <- t(X)
-  if(is.na(lambda)) lambda <- 2*sqrt(K*log(p*n))
-  if(is.na(gamma)) gamma <- 2*sqrt(n*S*log(p))
 
   beta <- CVXR::Variable(n,p)
   D <- matrix(0, nrow=n, ncol=n)
