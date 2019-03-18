@@ -29,6 +29,5 @@ GLL1_solver <- function(X, y, lambda = lambda, gamma = gamma){
                                          gamma*CVXR::cvxr_norm(D%*%beta,p=1)))
 
   result <- CVXR::psolve(prob, solver="SCS")
-  zz <- result$getValue(beta)
-  plot(zz[,1])
+  result$getValue(beta)
 }

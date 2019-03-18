@@ -39,11 +39,12 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
+  true_beta <- create_coef(vec, full = T)
   lambda2 <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
   tau2 <- oracle_tune_screeningtau(dat$X, dat$y, lambda2, true_partition)
 
-  K = 2
-  S = 20
+  K <- 2
+  S <- 20
 
   n <- nrow(dat$X); p <- ncol(dat$X)
 
