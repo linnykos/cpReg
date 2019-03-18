@@ -59,7 +59,7 @@ criterion <- function(dat, vec, y){
   haus4b <- cpReg::hausdorff(partition4b, round(true_partition*n))
 
   beta_mat4b <- cpReg::unravel(list(partition = partition4b,
-                             coef_list = .refit_high_dim(dat$X, dat$y, lambda2, partition4b/n)))
+                             coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda2, partition4b/n)))
   beta_error4b <- sum(sapply(1:n, function(x){cpReg:::.l2norm(beta_mat4b[x,] - true_beta[x,])^2}))/n
 
   list(beta_error = list(beta_error4, beta_error4b),
