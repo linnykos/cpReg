@@ -17,6 +17,7 @@ high_dim_feasible_estimate <- function(X, y, lambda, K = NA, tau = NA,
                                        delta = 10, max_candidates = NA,
                                        verbose = F){
   stopifnot(!is.na(K) | !is.na(tau))
+  stopifnot(is.na(K) | is.na(tau))
   data <- list(X = X, y = y)
 
   if(!is.na(K)){

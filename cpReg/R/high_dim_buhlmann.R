@@ -10,19 +10,196 @@
 #'
 #' @return list containing \code{partition} and \code{coef_list}
 #' @export
-high_dim_buhlmann_estimate <- function(X, y, lambda, K,
+high_dim_buhlmann_estimate <- function(X, y, lambda, K = NA, gamma = NA,
                                        delta = 10, max_candidates = NA,
                                        verbose = F){
   stopifnot(nrow(X) == length(y))
+  stopifnot(is.na(gamma) | is.na(K))
+  stopifnot(!is.na(gamma) | !is.na(K))
   data <- list(X = X, y = y)
 
-  partition <- cp_fixedstep(data, data_length_func = function(x){nrow(x$X)},
-                        compute_cusum_func = .compute_regression_buhlmann,
-                        K = K, delta = delta, max_candidates = max_candidates,
-                        verbose = verbose, lambda = lambda)
+  if(!is.na(gamma)){
+    partition <- wbs(data, data_length_func = function(x){nrow(x$X)},
+                     compute_cusum_func = .compute_regression_buhlmann,
+                     tau_function = .buhlmann_threshold,
+                     M = 0, delta = delta,
+                     max_changepoints = max_changepoints,
+                     verbose = verbose,
+                     lambda = lambda, gamma = gamma)
+  } else {
+    partition <- cp_fixedstep(data, data_length_func = function(x){nrow(x$X)},
+                              compute_cusum_func = .compute_regression_buhlmann,
+                              K = K, delta = delta, max_candidates = max_candidates,
+                              verbose = verbose, lambda = lambda)
+  }
 
   n <- nrow(X)
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))
+}
+
+#' Tune gamma (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param partition vector with values between 0 and 1
+#' @param factor numeric
+#'
+#' @return numeric
+#' @export
+oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
+  coef_list <- .refit_high_dim(X, y, lambda, partition)
+  n <- nrow(X)
+  partition_idx <- round(partition*n)
+  k <- length(coef_list)
+
+  res <- min(sapply(1:(k-1), function(x){
+    idx1 <- (partition_idx[x]+1):partition_idx[x+1]
+    idx2 <- (partition_idx[x+1]+1):partition_idx[x+2]
+
+    fit <- glmnet::glmnet(X[c(idx1, idx2),,drop = F], y[c(idx1, idx2)],
+                          intercept = F)
+    alternative_coef <- glmnet::coef.glmnet(fit, s = lambda*sqrt(length(c(idx1,idx2))))[-1]
+    loss <- as.numeric(.l2norm(X[c(idx1, idx2),,drop=F]%*%alternative_coef - y[c(idx1, idx2)])^2)/n
+
+    loss1 <- as.numeric(.l2norm(X[idx1,,drop=F]%*%coef_list[[x]] - y[idx1])^2)/n
+    loss2 <- as.numeric(.l2norm(X[idx2,,drop=F]%*%coef_list[[x+1]] - y[idx2])^2)/n
+
+    loss - (loss1+loss2)
+  }))
+
+  res*factor
+}
+
+#' Tune gamma range (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param k the number of desired segments (number of changepoints + 1)
+#' @param delta numeric
+#' @param min_gamma numeric
+#' @param max_gamma numeric
+#' @param max_iter numeric
+#' @param verbose boolean
+#'
+#' @return list
+#' @export
+oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
+                                    max_gamma = 1000, max_iter = 10, verbose = T){
+
+  # find a suitable lower and upper startpoint
+  min_gamma <- .initial_gamma_overshoot(X, y, lambda, k, min_gamma, delta = delta, smaller = T,
+                                        verbose = verbose)
+  max_gamma <- .initial_gamma_overshoot(X, y, lambda, k, max_gamma, delta = delta, smaller = F,
+                                        verbose = verbose)
+
+  # find a suitable starting point
+  res <- .initialize_gamma_binarysearch(X, y, lambda, k = k, delta = delta,
+                                        min_gamma = min_gamma, max_gamma = max_gamma, verbose = verbose)
+
+  min_gamma_vec <- res$min_gamma_vec; max_gamma_vec <- res$max_gamma_vec; gamma_vec <- res$gamma
+  if(length(gamma_vec) == 0) return(list(gamma = NA, min_gamma = max(min_gamma_vec), max_gamma = min(max_gamma_vec)))
+  iter <- 1
+
+  # throttle on both sides
+  while(iter <= max_iter){
+    try_min <- mean(c(max(min_gamma_vec), min(gamma_vec)))
+    res <-  high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_min,
+                                       delta = delta)
+    if(length(res$partition) - 1 > k){
+      min_gamma_vec <- c(min_gamma_vec, try_min)
+    } else if(length(res$partition) - 1 == k){
+      gamma_vec <- c(gamma_vec, try_min)
+    } else stop()
+
+    try_max <- mean(c(min(max_gamma_vec), max(gamma_vec)))
+    res <-  high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_max,
+                                       delta = delta)
+
+    if(length(res$partition) - 1 < k){
+      max_gamma_vec <- c(max_gamma_vec, try_max)
+    } else if(length(res$partition) - 1 == k){
+      gamma_vec <- c(gamma_vec, try_max)
+    } else stop()
+
+    iter <- iter + 1
+    if(verbose) print(list(min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec, gamma_vec = gamma_vec))
+  }
+
+  stopifnot(max(min_gamma_vec) < min(gamma_vec), min(max_gamma_vec) > max(gamma_vec))
+
+  list(gamma = range(gamma_vec), min_gamma = max(min_gamma_vec), max_gamma = min(max_gamma_vec))
+}
+
+#' Tune gamma to minimize hausdorff distance (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param partition vector with values between 0 and 1
+#' @param k_vec numeric vector of the number of desired segments (number of changepoints + 1)
+#' @param delta numeric
+#' @param min_gamma numeric
+#' @param max_gamma numeric
+#' @param verbose boolean
+#'
+#' @return numeric
+#' @export
+oracle_tune_gamma_hausdorff <- function(X, y, lambda, partition,
+                                        k_vec,
+                                        delta = 10, min_gamma = 0.01,
+                                        max_gamma = 1000,
+                                        verbose = F){
+  n <- nrow(X)
+  res <- lapply(k_vec, function(i){
+    if(verbose) print(i)
+    oracle_tune_gamma_range(X, y, lambda, i, delta = delta, min_gamma = min_gamma,
+                            max_gamma = max_gamma, verbose = F)
+  })
+
+  quality_vec <- sapply(1:length(res), function(i){
+    if(verbose) print(i)
+    if(any(is.na(res[[i]]$gamma))) return(NA)
+
+    gamma <- mean(res[[i]]$gamma)
+    tmp <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = gamma,
+                                      delta = delta)$partition
+    hausdorff(tmp, round(partition*n))
+  })
+
+  if(all(is.na(quality_vec))){
+    return(max(sapply(res, function(i){i$min_gamma}), na.rm = T))
+  }
+
+  idx <- which.min(quality_vec)
+  mean(res[[idx]]$gamma)
+}
+
+#' Tune screening tau for high dimensional infeasible (oracle)
+#'
+#' @param X \code{n} by \code{d} matrix
+#' @param y length \code{n} vector
+#' @param lambda numeric
+#' @param partition vector with values between 0 and 1
+#' @param factor numeric
+#'
+#' @return numeric
+#' @export
+oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
+  stopifnot(all(partition >= 0))
+
+  n <- nrow(X)
+  coef_list <- .refit_high_dim(X, y, lambda, partition)
+  partition_idx <- round(partition*n)
+  fit <- list(partition = partition_idx, coef_list = coef_list)
+  mat <- unravel(fit)
+
+  vec <- sapply(2:(length(partition_idx)-1), function(x){
+    .compute_cusum(mat, partition_idx[x-1], partition_idx[x+1], partition_idx[x])
+  })
+
+  min(vec)*factor
 }
 
 ##################
@@ -39,4 +216,66 @@ high_dim_buhlmann_estimate <- function(X, y, lambda, K,
 
   -1*(as.numeric(.l2norm(X1%*%beta1 - y1)^2) +
         as.numeric(.l2norm(X2%*%beta2 - y2)^2))
+}
+
+
+.buhlmann_threshold <- function(data, interval, lambda, gamma){
+  n <- nrow(data$X)
+  stopifnot(interval[1] < interval[2])
+  X <- data$X[(interval[1]+1):interval[2],,drop = F]
+  y <- data$y[(interval[1]+1):interval[2]]
+
+  len <- interval[2] - interval[1]
+  beta <- .lasso_regression(X, y, lambda/sqrt(len))
+  -1*(as.numeric(.l2norm(X%*%beta - y)^2) + lambda*sqrt(len)*sum(abs(beta)) + gamma)
+}
+
+.initial_gamma_overshoot <- function(X, y, lambda, k, gamma, delta = 10, smaller = T,
+                                     verbose = T, max_iter = 30){
+  iter <- 1
+
+  while(iter <= max_iter){
+    if(verbose) print(paste0("Still trying to initialize ", ifelse(smaller, "minimum", "maximum"), " gamma"))
+    res_low <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = gamma,
+                                          delta = delta)
+    if(smaller){
+      if(length(res_low$partition)-1 <= k) gamma <- gamma/2 else break()
+    }
+
+    if(!smaller){
+      if(length(res_low$partition)-1 >= k) gamma <- gamma*2 else break()
+    }
+
+    iter <- iter+1
+  }
+
+  gamma
+}
+
+.initialize_gamma_binarysearch <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
+                                           max_gamma = 1000, tol = 1e-3, verbose = T,
+                                           max_iter = 30){
+  min_gamma_vec <- min_gamma; max_gamma_vec <- max_gamma; gamma <- numeric(0)
+  iter <- 1
+
+  # phase 1: find ONE suitable gamma
+  while(abs(max(min_gamma_vec) - min(max_gamma_vec)) > tol & iter < max_iter){
+    try_gamma <- mean(c(max(min_gamma_vec), min(max_gamma_vec)))
+    res <- high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_gamma,
+                                      delta = delta)
+
+    if(verbose) print(paste0("Trying ", try_gamma, " resulting in ", length(res$partition)-1))
+
+    if(length(res$partition)-1 == k) {
+      gamma <- try_gamma; break()
+    } else if(length(res$partition)-1 > k){
+      min_gamma_vec <- c(try_gamma, min_gamma_vec)
+    } else {
+      max_gamma_vec <- c(try_gamma, max_gamma_vec)
+    }
+
+    iter <- iter + 1
+  }
+
+  list(gamma = gamma, min_gamma_vec = min_gamma_vec, max_gamma_vec = max_gamma_vec)
 }
