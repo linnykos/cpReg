@@ -23,9 +23,8 @@ high_dim_buhlmann_estimate <- function(X, y, lambda, K = NA, gamma = NA,
                      compute_cusum_func = .compute_regression_buhlmann,
                      tau_function = .buhlmann_threshold,
                      M = 0, delta = delta,
-                     max_changepoints = max_changepoints,
-                     verbose = verbose,
-                     lambda = lambda, gamma = gamma)
+                     verbose = verbose, lambda = lambda, gamma = gamma,
+                     with_penalty = T)
   } else {
     partition <- cp_fixedstep(data, data_length_func = function(x){nrow(x$X)},
                               compute_cusum_func = .compute_regression_buhlmann,
@@ -59,7 +58,7 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
 
     fit <- glmnet::glmnet(X[c(idx1, idx2),,drop = F], y[c(idx1, idx2)],
                           intercept = F)
-    alternative_coef <- glmnet::coef.glmnet(fit, s = lambda*sqrt(length(c(idx1,idx2))))[-1]
+    alternative_coef <- glmnet::coef.glmnet(fit, s = .cp_to_glmnet(lambda, idx2-idx1))[-1]
     loss <- as.numeric(.l2norm(X[c(idx1, idx2),,drop=F]%*%alternative_coef - y[c(idx1, idx2)])^2)/n
 
     loss1 <- as.numeric(.l2norm(X[idx1,,drop=F]%*%coef_list[[x]] - y[idx1])^2)/n
@@ -85,17 +84,17 @@ oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
 #'
 #' @return list
 #' @export
-oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
-                                    max_gamma = 1000, max_iter = 10, verbose = T){
+oracle_tune_gamma_range <- function(X, y, lambda, K, delta = 10, min_gamma = 0.01,
+                                    max_gamma = 16000, max_iter = 10, verbose = T){
 
   # find a suitable lower and upper startpoint
-  min_gamma <- .initial_gamma_overshoot(X, y, lambda, k, min_gamma, delta = delta, smaller = T,
+  min_gamma <- .initial_gamma_overshoot(X, y, lambda, K, min_gamma, delta = delta, smaller = T,
                                         verbose = verbose)
-  max_gamma <- .initial_gamma_overshoot(X, y, lambda, k, max_gamma, delta = delta, smaller = F,
+  max_gamma <- .initial_gamma_overshoot(X, y, lambda, K, max_gamma, delta = delta, smaller = F,
                                         verbose = verbose)
 
   # find a suitable starting point
-  res <- .initialize_gamma_binarysearch(X, y, lambda, k = k, delta = delta,
+  res <- .initialize_gamma_binarysearch(X, y, lambda, K = K, delta = delta,
                                         min_gamma = min_gamma, max_gamma = max_gamma, verbose = verbose)
 
   min_gamma_vec <- res$min_gamma_vec; max_gamma_vec <- res$max_gamma_vec; gamma_vec <- res$gamma
@@ -107,9 +106,9 @@ oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.0
     try_min <- mean(c(max(min_gamma_vec), min(gamma_vec)))
     res <-  high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_min,
                                        delta = delta)
-    if(length(res$partition) - 1 > k){
+    if(length(res$partition) - 1 > K){
       min_gamma_vec <- c(min_gamma_vec, try_min)
-    } else if(length(res$partition) - 1 == k){
+    } else if(length(res$partition) - 1 == K){
       gamma_vec <- c(gamma_vec, try_min)
     } else stop()
 
@@ -117,9 +116,9 @@ oracle_tune_gamma_range <- function(X, y, lambda, k, delta = 10, min_gamma = 0.0
     res <-  high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = try_max,
                                        delta = delta)
 
-    if(length(res$partition) - 1 < k){
+    if(length(res$partition) - 1 < K){
       max_gamma_vec <- c(max_gamma_vec, try_max)
-    } else if(length(res$partition) - 1 == k){
+    } else if(length(res$partition) - 1 == K){
       gamma_vec <- c(gamma_vec, try_max)
     } else stop()
 
@@ -204,7 +203,8 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 
 ##################
 
-.compute_regression_buhlmann <- function(data, start, end, breakpoint, lambda){
+.compute_regression_buhlmann <- function(data, start, end, breakpoint, lambda,
+                                         with_penalty = F, gamma = 0, ...){
   n <- nrow(data$X)
   X1 <- data$X[(start+1):breakpoint,,drop = F]
   y1 <- data$y[(start+1):breakpoint]
@@ -214,19 +214,21 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
   beta1 <- .lasso_regression(X1, y1, .cp_to_glmnet(lambda, breakpoint-start))
   beta2 <- .lasso_regression(X2, y2, .cp_to_glmnet(lambda, end-breakpoint))
 
+  if(with_penalty) penalty <- 2*gamma else penalty <- 0
+
   -1*(as.numeric(.l2norm(X1%*%beta1 - y1)^2) +
-        as.numeric(.l2norm(X2%*%beta2 - y2)^2))
+        as.numeric(.l2norm(X2%*%beta2 - y2)^2) + penalty)
 }
 
 
-.buhlmann_threshold <- function(data, interval, lambda, gamma){
+.buhlmann_threshold <- function(data, interval, lambda, gamma, ...){
   n <- nrow(data$X)
   stopifnot(interval[1] < interval[2])
   X <- data$X[(interval[1]+1):interval[2],,drop = F]
   y <- data$y[(interval[1]+1):interval[2]]
 
   len <- interval[2] - interval[1]
-  beta <- .lasso_regression(X, y, lambda/sqrt(len))
+  beta <- .lasso_regression(X, y, .cp_to_glmnet(lambda, len))
   -1*(as.numeric(.l2norm(X%*%beta - y)^2) + lambda*sqrt(len)*sum(abs(beta)) + gamma)
 }
 
@@ -252,7 +254,7 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
   gamma
 }
 
-.initialize_gamma_binarysearch <- function(X, y, lambda, k, delta = 10, min_gamma = 0.01,
+.initialize_gamma_binarysearch <- function(X, y, lambda, K, delta = 10, min_gamma = 0.01,
                                            max_gamma = 1000, tol = 1e-3, verbose = T,
                                            max_iter = 30){
   min_gamma_vec <- min_gamma; max_gamma_vec <- max_gamma; gamma <- numeric(0)
@@ -266,9 +268,9 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 
     if(verbose) print(paste0("Trying ", try_gamma, " resulting in ", length(res$partition)-1))
 
-    if(length(res$partition)-1 == k) {
+    if(length(res$partition)-1 == K) {
       gamma <- try_gamma; break()
-    } else if(length(res$partition)-1 > k){
+    } else if(length(res$partition)-1 > K){
       min_gamma_vec <- c(try_gamma, min_gamma_vec)
     } else {
       max_gamma_vec <- c(try_gamma, max_gamma_vec)

@@ -23,3 +23,52 @@ test_that("high_dim_buhlmann_estimate works", {
   expect_true(is.list(res))
   expect_true(length(res) == 2)
 })
+
+test_that("high_dim_buhlmann_estimate works with given gamma", {
+  set.seed(10)
+  dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
+
+  true_partition <-  c(0, .5, 1)
+  lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
+  delta <- 10
+  gamma_range <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, K = length(true_partition)-1, delta = delta,
+                                         verbose = F)
+
+  if(any(is.na(gamma_range$gamma))) gamma <- gamma_range$min_gamma else gamma <- mean(gamma_range$gamma)
+
+  res <- high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 2)
+})
+
+############
+
+## .buhlmann_threshold_closure is correct
+
+test_that(".buhlmann_threshold works", {
+  set.seed(10)
+  dat <- create_data(list(c(1,1,1), c(2,-1,2)), c(0, 50, 100))
+  res <- .buhlmann_threshold(dat, c(1,100), 10, 10)
+
+  expect_true(is.numeric(res))
+})
+
+
+###############
+
+## oracle_tune_gamma_range is correct
+
+test_that("oracle_tune_gamma_range works", {
+  set.seed(10)
+  n <- 100
+  partition <- c(0, 0.5, 1)
+  dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), round(partition*n))
+  lambda <- oracle_tune_lambda(dat$X, dat$y, partition)
+  K <- length(partition)-1
+
+  res <- oracle_tune_gamma_range(dat$X, dat$y, lambda, K = K, verbose = F)
+
+  expect_true(is.list(res))
+  expect_true(all(names(res) == c("gamma", "min_gamma", "max_gamma")))
+})
