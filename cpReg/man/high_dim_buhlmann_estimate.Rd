@@ -4,8 +4,8 @@
 \alias{high_dim_buhlmann_estimate}
 \title{High dimensional estimator - Buhlmann}
 \usage{
-high_dim_buhlmann_estimate(X, y, lambda, K, delta = 10,
-  max_candidates = NA, verbose = F)
+high_dim_buhlmann_estimate(X, y, lambda, K = NA, gamma = NA,
+  delta = 10, max_candidates = NA, verbose = F)
 }
 \arguments{
 \item{X}{\code{n} by \code{d} matrix}
@@ -15,6 +15,8 @@ high_dim_buhlmann_estimate(X, y, lambda, K, delta = 10,
 \item{lambda}{numeric}
 
 \item{K}{numeric}
+
+\item{gamma}{numeric}
 
 \item{delta}{numeric}
 

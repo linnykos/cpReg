@@ -14,6 +14,8 @@ high_dim_feasible_estimate(X, y, lambda, K = NA, tau = NA, M = 0,
 
 \item{lambda}{numeric}
 
+\item{K}{numeric}
+
 \item{tau}{numeric}
 
 \item{M}{numeric}

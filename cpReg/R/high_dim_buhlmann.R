@@ -4,6 +4,7 @@
 #' @param y length \code{n} vector
 #' @param lambda numeric
 #' @param K numeric
+#' @param gamma numeric
 #' @param delta numeric
 #' @param max_candidates numeric
 #' @param verbose boolean
@@ -139,32 +140,6 @@ oracle_tune_gamma_hausdorff <- function(X, y, lambda, partition,
 
   idx <- which.min(quality_vec)
   mean(res[[idx]]$gamma)
-}
-
-#' Tune screening tau for high dimensional infeasible (oracle)
-#'
-#' @param X \code{n} by \code{d} matrix
-#' @param y length \code{n} vector
-#' @param lambda numeric
-#' @param partition vector with values between 0 and 1
-#' @param factor numeric
-#'
-#' @return numeric
-#' @export
-oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
-  stopifnot(all(partition >= 0))
-
-  n <- nrow(X)
-  coef_list <- .refit_high_dim(X, y, lambda, partition)
-  partition_idx <- round(partition*n)
-  fit <- list(partition = partition_idx, coef_list = coef_list)
-  mat <- unravel(fit)
-
-  vec <- sapply(2:(length(partition_idx)-1), function(x){
-    .compute_cusum(mat, partition_idx[x-1], partition_idx[x+1], partition_idx[x])
-  })
-
-  min(vec)*factor
 }
 
 ##################
