@@ -36,46 +36,12 @@ high_dim_buhlmann_estimate <- function(X, y, lambda, K = NA, gamma = NA,
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))
 }
 
-#' Tune gamma (oracle)
-#'
-#' @param X \code{n} by \code{d} matrix
-#' @param y length \code{n} vector
-#' @param lambda numeric
-#' @param partition vector with values between 0 and 1
-#' @param factor numeric
-#'
-#' @return numeric
-#' @export
-oracle_tune_gamma <- function(X, y, lambda, partition, factor = 3/4){
-  coef_list <- .refit_high_dim(X, y, lambda, partition)
-  n <- nrow(X)
-  partition_idx <- round(partition*n)
-  k <- length(coef_list)
-
-  res <- min(sapply(1:(k-1), function(x){
-    idx1 <- (partition_idx[x]+1):partition_idx[x+1]
-    idx2 <- (partition_idx[x+1]+1):partition_idx[x+2]
-
-    fit <- glmnet::glmnet(X[c(idx1, idx2),,drop = F], y[c(idx1, idx2)],
-                          intercept = F)
-    alternative_coef <- glmnet::coef.glmnet(fit, s = .cp_to_glmnet(lambda, idx2-idx1))[-1]
-    loss <- as.numeric(.l2norm(X[c(idx1, idx2),,drop=F]%*%alternative_coef - y[c(idx1, idx2)])^2)/n
-
-    loss1 <- as.numeric(.l2norm(X[idx1,,drop=F]%*%coef_list[[x]] - y[idx1])^2)/n
-    loss2 <- as.numeric(.l2norm(X[idx2,,drop=F]%*%coef_list[[x+1]] - y[idx2])^2)/n
-
-    loss - (loss1+loss2)
-  }))
-
-  res*factor
-}
-
 #' Tune gamma range (oracle)
 #'
 #' @param X \code{n} by \code{d} matrix
 #' @param y length \code{n} vector
 #' @param lambda numeric
-#' @param k the number of desired segments (number of changepoints + 1)
+#' @param K the number of desired segments (number of changepoints + 1)
 #' @param delta numeric
 #' @param min_gamma numeric
 #' @param max_gamma numeric
@@ -214,7 +180,7 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
   beta1 <- .lasso_regression(X1, y1, .cp_to_glmnet(lambda, breakpoint-start))
   beta2 <- .lasso_regression(X2, y2, .cp_to_glmnet(lambda, end-breakpoint))
 
-  if(with_penalty) penalty <- 2*gamma else penalty <- 0
+  if(with_penalty) penalty <- 2*gamma*n else penalty <- 0
 
   -1*(as.numeric(.l2norm(X1%*%beta1 - y1)^2) +
         as.numeric(.l2norm(X2%*%beta2 - y2)^2) + penalty)
@@ -229,7 +195,7 @@ oracle_tune_screeningtau <- function(X, y, lambda, partition, factor = 1/4){
 
   len <- interval[2] - interval[1]
   beta <- .lasso_regression(X, y, .cp_to_glmnet(lambda, len))
-  -1*(as.numeric(.l2norm(X%*%beta - y)^2) + lambda*sqrt(len)*sum(abs(beta)) + gamma)
+  -1*(as.numeric(.l2norm(X%*%beta - y)^2) + lambda*sqrt(len)*sum(abs(beta)) + gamma*n)
 }
 
 .initial_gamma_overshoot <- function(X, y, lambda, k, gamma, delta = 10, smaller = T,
