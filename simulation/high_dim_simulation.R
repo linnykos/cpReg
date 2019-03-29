@@ -60,10 +60,10 @@ criterion <- function(dat, vec, y){
   K <- 2
 
   # parameter for GLL1
-  screening_tau <- oracle_tune_screeningtau(dat$X, dat$y, lambda2, true_partition)
+  screening_tau <- oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
+  S <- 20
   lambda2 <- 5*sqrt(K*log(p*n))
   gamma2 <- 5*sqrt(n*S*log(p))
-  S <- 20
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau, K = NA,
                                     verbose = F, max_candidates = NA, delta = delta, M = 50)
