@@ -50,3 +50,6 @@ gamma <- 1.4
 
 res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
                                           verbose = F, max_candidates = NA, delta = delta)
+beta_mat2 <- cpReg::unravel(res2)
+tau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
+partition2b <- cpReg::screening(beta_mat2, tau = tau, M = 0)

@@ -1,6 +1,7 @@
 rm(list=ls())
 library(simulation)
 library(cpReg)
+source("../simulation/SGL_solver.R")
 
 paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
                                   1/2))
@@ -40,34 +41,66 @@ rule <- function(vec){
 criterion <- function(dat, vec, y){
   true_beta <- create_coef(vec, full = T)
 
-  delta <- max(round(vec["n"]/10), 10)
+  n <- nrow(dat$X); p <- ncol(dat$X)
+
+  delta <- max(round(n/10), 10)
+
+  # parameter for feasible (and others)
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
+  tau <- cpReg::oracle_tune_tau(dat$X, dat$y, lambda, true_partition,
+                                factor = 1/2)
+
+  # parameter for buhlmann
+  gamma_range <- cpReg::oracle_tune_gamma_range(dat$X, dat$y, lambda, K = 3, verbose = F)
+  if(any(is.na(gamma_range$gamma))) gamma <- gamma_range$min_gamma else gamma <- mean(gamma_range$gamma)
+
+  # parameter for infeasible
   grouplambda <- cpReg::oracle_tune_grouplambda(dat$X, dat$y, true_partition)
   maxl2 <- max(apply(true_beta, 1, cpReg:::.l2norm))
   K <- 2
 
-  res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, K = K,
+  # parameter for GLL1
+  screening_tau <- oracle_tune_screeningtau(dat$X, dat$y, lambda2, true_partition)
+  lambda2 <- 5*sqrt(K*log(p*n))
+  gamma2 <- 5*sqrt(n*S*log(p))
+  S <- 20
+
+  res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau, K = NA,
                                     verbose = F, max_candidates = NA, delta = delta, M = 50)
-  res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, K = K,
+  res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma, K = NA,
                                             verbose = F, max_candidates = NA, delta = delta)
   res3 <- cpReg::high_dim_infeasible_estimate(dat$X, dat$y, grouplambda, maxl2, K = K, delta = delta)
+  res4 <- GLL1_solver(dat$X, dat$y, lambda = lambda2, gamma = gamma2)
 
   beta_mat1 <- cpReg::unravel(res1)
   beta_mat2 <- cpReg::unravel(res2)
   beta_mat3 <- cpReg::unravel(res3)
 
-  beta_error1 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat1[x,] - true_beta[x,])^2}))/vec["n"]
-  beta_error2 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2[x,] - true_beta[x,])^2}))/vec["n"]
-  beta_error3 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat3[x,] - true_beta[x,])^2}))/vec["n"]
+  beta_error1 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat1[x,] - true_beta[x,])^2}))/n
+  beta_error2 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2[x,] - true_beta[x,])^2}))/n
+  beta_error3 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat3[x,] - true_beta[x,])^2}))/n
+  beta_error4 <- sum(sapply(1:n, function(x){cpReg:::.l2norm(res4[x,] - true_beta[x,])^2}))/n
 
-  haus1 <- cpReg::hausdorff(res1$partition, round(true_partition*vec["n"]))
-  haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*vec["n"]))
-  haus3 <- cpReg::hausdorff(res3$partition, round(true_partition*vec["n"]))
+  haus1 <- cpReg::hausdorff(res1$partition, round(true_partition*n))
+  haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*n))
+  haus3 <- cpReg::hausdorff(res3$partition, round(true_partition*n))
+  partition4b <- cpReg::screening(res4, tau = screening_tau, M = 0)
+  haus4b <- cpReg::hausdorff(partition4b, round(true_partition*n))
 
-  list(beta_error = list(beta_error1, beta_error2, beta_error3),
-       haus = list(haus1, haus2, haus3),
-       partition = list(res1$partition, res2$partition, res3$partition),
-       parameters = list(lambda = lambda, grouplambda = grouplambda))
+  beta_mat4b <- cpReg::unravel(list(partition = partition4b,
+                                    coef_list = cpReg:::.refit_high_dim(dat$X, dat$y, lambda, partition4b/n)))
+  beta_error4b <- sum(sapply(1:n, function(x){cpReg:::.l2norm(beta_mat4b[x,] - true_beta[x,])^2}))/n
+
+
+  list(beta_error = list(beta_error1, beta_error2, beta_error3, beta_error4,
+                         beta_error4b),
+       haus = list(haus1, haus2, haus3, haus4b),
+       partition = list(res1$partition, res2$partition, res3$partition,
+                        partition4b),
+       parameters = list(lambda = lambda, tau = tau,
+                         gamma_range = gamma_range, gamma = gamma,
+                         grouplambda = grouplambda,
+                         screening_tau = screening_tau))
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
