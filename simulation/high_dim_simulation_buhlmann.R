@@ -42,8 +42,9 @@ criterion <- function(dat, vec, y){
 
   delta <- max(round(vec["n"]/10), 10)
   lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
-  gamma <- cpReg::oracle_tune_gamma_hausdorff(dat$X, dat$y, lambda, true_partition,
-                                              k_vec = c(2:5))
+  gamma_range <- cpReg::oracle_tune_gamma_range(dat$X, dat$y, lambda, K = 3, verbose = F)
+
+  if(any(is.na(gamma_range$gamma))) gamma <- gamma_range$min_gamma else gamma <- mean(gamma_range$gamma)
 
   res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
                                             verbose = F, max_candidates = NA, delta = delta)
@@ -55,13 +56,13 @@ criterion <- function(dat, vec, y){
   ################
 
   tau <- cpReg::oracle_tune_screeningtau(dat$X, dat$y, lambda, true_partition)
-  partition2b <- cpReg::screening(res2, tau = tau2, M = 0)
-  haus2b <- cpReg::hausdorff(partition2b, round(true_partition*n))
+  partition2b <- cpReg::screening(beta_mat2, tau = tau, M = 0)
+  haus2b <- cpReg::hausdorff(partition2b, round(true_partition*vec["n"]))
 
   list(beta_error = list(beta_error2),
        haus = list(haus2, haus2b),
        partition = list(res2$partition, partition2b),
-       parameters = list(lambda = lambda, gamma = gamma, tau = tau))
+       parameters = list(lambda = lambda, gamma_range = gamma_range, tau = tau))
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
@@ -72,6 +73,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = 50,
                                         cores = 15, as_list = T,
-                                        filepath = "../results/high_dim_simulation_tmp.RData",
+                                        filepath = "../results/high_dim_simulation_buhlmann_tmp.RData",
                                         verbose = T)
-save.image("../results/high_dim_simulation.RData")
+save.image("../results/high_dim_simulation_buhlmann.RData")

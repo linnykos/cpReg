@@ -1,28 +1,52 @@
 rm(list=ls())
-set.seed(10)
-dat <- create_data(list(c(10,10,10), c(-10,-10,-10)), c(0, 50, 100))
+library(simulation)
+library(cpReg)
 
-true_partition <-  c(0, .5, 1)
-lambda <- oracle_tune_lambda(dat$X, dat$y, true_partition)
-delta <- 10
-# gamma_range <- oracle_tune_gamma_range(dat$X, dat$y, lambda = lambda, k = length(true_partition)-1, delta = delta,
-#                                        verbose = T)
-X = dat$X
-y = dat$y
-K = length(true_partition)-1
-verbose = T
-min_gamma = 0.01
-max_gamma = 1000
-max_iter = 10
+paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
+                                  1/2))
+colnames(paramMat) <- c("n", "X_type", "d/n")
 
-high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = 1700.634,
-                           delta = delta)
+X_type_vec <- c("identity", "toeplitz", "equicorrelation")
+true_partition <- c(0,0.3,0.7,1)
 
-# min_gamma <- .initial_gamma_overshoot(X, y, lambda, K, min_gamma, delta = delta, smaller = T,
-#                                       verbose = verbose)
-# high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = min_gamma,
-#                            delta = delta)
-# max_gamma <- .initial_gamma_overshoot(X, y, lambda, K, max_gamma, delta = delta, smaller = F,
-#                                       verbose = verbose)
-# high_dim_buhlmann_estimate(X, y, lambda = lambda, gamma = max_gamma,
-#                            delta = delta)
+#############
+
+create_coef <- function(vec, full = F){
+  d <- 50 # d <- vec["d/n"]*vec["n"]
+  beta1 <- c(rep(1, 10), rep(0, d-10))
+  beta2 <- c(rep(0, d-10), rep(1, 10))
+  lis <- list(beta1 = beta1, beta2 = beta2)
+
+  if(!full){
+    lis
+  } else {
+    mat <- matrix(0, nrow = vec["n"], ncol = d)
+    idx <- round(true_partition*vec["n"])
+    for(i in 1:(length(idx)-1)){
+      zz <- i %% 2; if(zz == 0) zz <- 2
+      mat[(idx[i]+1):idx[i+1],] <- rep(lis[[zz]], each = idx[i+1]-idx[i])
+    }
+    mat
+  }
+}
+
+rule <- function(vec){
+  lis <- create_coef(vec, full = F)
+
+  cpReg::create_data(list(lis$beta1, lis$beta2, lis$beta1), round(true_partition*vec["n"]),
+                     cov_type = X_type_vec[vec["X_type"]])
+}
+
+########################
+
+set.seed(1)
+vec = paramMat[1,]
+dat = rule(vec)
+true_beta <- create_coef(vec, full = T)
+
+delta <- max(round(vec["n"]/10), 10)
+lambda <- cpReg::oracle_tune_lambda(dat$X, dat$y, true_partition)
+gamma <- 1.4
+
+res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma,
+                                          verbose = F, max_candidates = NA, delta = delta)
