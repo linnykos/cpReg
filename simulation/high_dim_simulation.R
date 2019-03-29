@@ -65,7 +65,7 @@ criterion <- function(dat, vec, y){
   lambda2 <- 5*sqrt(K*log(p*n))
   gamma2 <- 5*sqrt(n*S*log(p))
 
-  res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, tau = tau, K = NA,
+  res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = lambda, K = 2, tau = NA,
                                     verbose = F, max_candidates = NA, delta = delta, M = 50)
   res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = lambda, gamma = gamma, K = NA,
                                             verbose = F, max_candidates = NA, delta = delta)
