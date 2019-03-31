@@ -3,11 +3,11 @@ library(simulation)
 library(cpReg)
 source("../simulation/SGL_solver.R")
 
-paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(1,2),
+paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(4),
                                   1/2))
 colnames(paramMat) <- c("n", "X_type", "d/n")
 
-X_type_vec <- c("identity", "toeplitz", "equicorrelation")
+X_type_vec <- c("identity", "toeplitz", "equicorrelation", "block")
 true_partition <- c(0,0.3,0.7,1)
 
 #############
@@ -113,4 +113,4 @@ res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         cores = 15, as_list = T,
                                         filepath = "../results/high_dim_simulation_tmp.RData",
                                         verbose = T)
-save.image("../results/high_dim_simulation.RData")
+save.image("../results/high_dim_simulation_block.RData")

@@ -45,3 +45,15 @@ create_data <- function(coef_list, partition, cov_type = "identity"){
   diag(cov_mat) <- 1
   MASS::mvrnorm(n, rep(0, d), Sigma = cov_mat)
 }
+
+.cov_generation.block <- function(X, num_partition = 5){
+  n <- nrow(X); d <- ncol(X)
+  cov_mat <- matrix(0, d, d)
+  idx <- round(seq(0, d, length.out = num_partition+1))
+  for(i in 1:(length(idx)-1)){
+    cov_mat[(idx[i]+1):(idx[i+1]), (idx[i]+1):(idx[i+1])] <- 0.5
+  }
+  diag(cov_mat) <- 1
+  MASS::mvrnorm(n, rep(0, d), Sigma = cov_mat)
+}
+

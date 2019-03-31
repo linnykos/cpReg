@@ -1,24 +1,5 @@
 rm(list=ls())
-load("../results/high_dim_simulation_GLL1.RData")
-res_gll1 <- res
-load("../results/high_dim_simulation_buhlmann.RData")
-res_buhlmann <- res
 load("../results/high_dim_simulation.RData")
-
-for(i in 1:length(res)){
-  stopifnot(length(res[[i]]) == length(res_gll1[[i]]))
-  trials <- length(res[[i]])
-  for(j in 1:trials){
-    res[[i]][[j]]$beta_error[[2]] <- res_buhlmann[[i]][[j]]$beta_error[[1]]
-    res[[i]][[j]]$haus[[2]] <- res_buhlmann[[i]][[j]]$haus[[1]]
-    res[[i]][[j]]$partition[[2]] <- res_buhlmann[[i]][[j]]$partition[[1]]
-
-    res[[i]][[j]]$beta_error[[4]] <- res_gll1[[i]][[j]]$beta_error[[2]]
-    res[[i]][[j]]$beta_error[[5]] <- res_gll1[[i]][[j]]$beta_error[[1]]
-    res[[i]][[j]]$haus[[4]] <- res_gll1[[i]][[j]]$haus[[1]]
-    res[[i]][[j]]$partition[[4]] <- res_gll1[[i]][[j]]$partition[[1]]
-  }
-}
 
 num_methods_beta <- 5
 max_idx <- 10
