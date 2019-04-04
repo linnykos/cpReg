@@ -49,13 +49,13 @@ criterion <- function(dat, vec, y){
   set.seed(10)
   feasible_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_feasible_estimate, X = dat$X,
                                                       y = dat$y, K_range = c(1:5), delta = delta,
-                                                      max_iter = 10, cv_verbose = T)
+                                                      max_iter = 10, cv_verbose = F)
 
   # parameter for buhlmann
   set.seed(10)
   buhlmann_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_buhlmann_estimate, X = dat$X,
                                                       y = dat$y, K_range = c(1:5), delta = delta,
-                                                      max_iter = 10, cv_verbose = T)
+                                                      max_iter = 10, cv_verbose = F)
 
 
   res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = feasible_paramMat$lambda,
