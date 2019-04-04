@@ -53,37 +53,63 @@ delta <- max(round(n/20), 5)
 
 # parameter for feasible (and others)
 set.seed(10)
-feasible_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_feasible_estimate, X = dat$X,
-                                                    y = dat$y, K_range = c(1:5), delta = delta,
-                                                    max_iter = 10, cv_verbose = F)
+# feasible_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_feasible_estimate, X = dat$X,
+#                                                     y = dat$y, K_range = c(1:5), delta = delta,
+#                                                     max_iter = 10, cv_verbose = F)
 
-# parameter for buhlmann
-set.seed(10)
-buhlmann_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_buhlmann_estimate, X = dat$X,
-                                                    y = dat$y, K_range = c(1:5), delta = delta,
-                                                    max_iter = 10, cv_verbose = F)
+method = cpReg::high_dim_feasible_estimate
+X = dat$X
+y = dat$y
+K_range = c(1:5)
+max_iter = 10
+cv_verbose = F
+
+dat <- list(X = X, y = y)
+paramMat <- .tuning_lambda_K_pairing(method, dat, K_range = K_range,
+                                     cv_verbose = cv_verbose, max_iter = max_iter,
+                                     delta = delta)
+#
+# cv_val <- sapply(1:nrow(paramMat), function(x){
+#   print(x)
+#   if(cv_verbose) print(paste0("On K=", paramMat[x,2]))
+#   .cross_validate(method = method, dat, K = paramMat[x,2],
+#                   lambda = paramMat[x,1], cv_verbose = cv_verbose, delta = delta)
+# })
+
+.cross_validate(method = method, dat, K = paramMat[1,2],
+                lambda = paramMat[1,1], cv_verbose = cv_verbose, delta = delta)
+
+#################
+
+K = paramMat[1,2]
+lambda = paramMat[1,1]
+nfolds = 5
+
+n <- nrow(dat$X)
+fold_id <- rep(1:nfolds, times = ceiling(n/nfolds))[1:n]
+
+if(cv_verbose) print("Fitting each model")
+res_list <- lapply(1:nfolds, function(i){
+  idx <- which(fold_id != i)
+  method(dat$X[idx,,drop = F], dat$y[idx], K = K, lambda = lambda, delta = delta)
+})
+
+if(cv_verbose) print("Evaluating the error")
+# stats::median(sapply(1:nfolds, function(i){
+#   print(i)
+#   .out_of_sample_prediction(dat, fold_id, fold = i, res_list[[i]])
+# }))
 
 
-res1 <- cpReg::high_dim_feasible_estimate(dat$X, dat$y, lambda = feasible_paramMat$lambda,
-                                          K = feasible_paramMat$K, tau = NA,
-                                          verbose = F, delta = delta, M = 0)
-res2 <- cpReg::high_dim_buhlmann_estimate(dat$X, dat$y, lambda = buhlmann_paramMat$lambda,
-                                          K = buhlmann_paramMat$K, gamma = NA,
-                                          verbose = F, delta = delta)
+# .out_of_sample_prediction(dat, fold_id, fold = 5, res_list[[5]])
 
-beta_mat1 <- cpReg::unravel(res1)
-beta_mat2 <- cpReg::unravel(res2)
+##########
+fold = 5
+res = res_list[[5]]
 
-beta_error1 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat1[x,] - true_beta[x,])^2}))/n
-beta_error2 <- sum(sapply(1:vec["n"], function(x){cpReg:::.l2norm(beta_mat2[x,] - true_beta[x,])^2}))/n
+stopifnot(length(res$partition) > 2)
 
-haus1 <- cpReg::hausdorff(res1$partition, round(true_partition*n))
-haus2 <- cpReg::hausdorff(res2$partition, round(true_partition*n))
-
-list(beta_error = list(beta_error1, beta_error2),
-     haus = list(haus1, haus2),
-     partition = list(res1$partition, res2$partition),
-     parameters = list(feasible_paramMat = feasible_paramMat,
-                       buhlmann_paramMat = buhlmann_paramMat))
-
-save("tmp.RData")
+n <- nrow(dat$X)
+idx <- which(fold_id == fold)
+cp_idx <- .convert_cp_idx(res$partition, fold_id, fold)
+stopifnot(cp_idx[1] == 0 & cp_idx[length(cp_idx)] == n)

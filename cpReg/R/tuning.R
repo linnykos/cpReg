@@ -124,8 +124,10 @@ tuning_cross_validation <- function(method, X, y, K_range = c(1:5),
 
 .convert_cp_idx <- function(partition, fold_id, fold){
   stopifnot(length(fold_id) >= max(partition))
+  tmp <- rep(NA, length(fold_id))
+  tmp[which(fold_id != fold)] <- 1:length(fold_id[fold_id != fold])
 
-  idx <- which(partition > fold)
-  partition[idx] <- partition[idx]+ceiling(partition[idx]/(max(fold_id)-1))
-  partition
+  c(0, sapply(2:length(partition), function(x){
+    which(tmp == partition[x])
+  }))
 }
