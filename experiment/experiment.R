@@ -53,15 +53,17 @@ delta <- max(round(n/20), 5)
 
 # parameter for feasible (and others)
 set.seed(10)
-# feasible_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_feasible_estimate, X = dat$X,
-#                                                     y = dat$y, K_range = c(1:5), delta = delta,
-#                                                     max_iter = 10, cv_verbose = F)
+feasible_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_feasible_estimate, X = dat$X,
+                                                    y = dat$y, K_range = c(1:5), delta = delta,
+                                                    max_iter = 2, cv_verbose = T)
+
+##########
 
 method = cpReg::high_dim_feasible_estimate
 X = dat$X
 y = dat$y
 K_range = c(1:5)
-max_iter = 10
+max_iter = 2
 cv_verbose = F
 
 dat <- list(X = X, y = y)
@@ -95,21 +97,22 @@ res_list <- lapply(1:nfolds, function(i){
 })
 
 if(cv_verbose) print("Evaluating the error")
-# stats::median(sapply(1:nfolds, function(i){
-#   print(i)
-#   .out_of_sample_prediction(dat, fold_id, fold = i, res_list[[i]])
-# }))
+stats::median(sapply(1:nfolds, function(i){
+  print(i)
+  .out_of_sample_prediction(dat, fold_id, fold = i, res_list[[i]])
+}))
 
 
 # .out_of_sample_prediction(dat, fold_id, fold = 5, res_list[[5]])
 
 ##########
-fold = 5
-res = res_list[[5]]
+fold = 4
+res = res_list[[fold]]
 
 stopifnot(length(res$partition) > 2)
 
 n <- nrow(dat$X)
 idx <- which(fold_id == fold)
+partition <- res$partition
 cp_idx <- .convert_cp_idx(res$partition, fold_id, fold)
-stopifnot(cp_idx[1] == 0 & cp_idx[length(cp_idx)] == n)
+stopifnot(cp_idx[1] == 0 & cp_idx[length(cp_idx)] %in% c(n-1,n))

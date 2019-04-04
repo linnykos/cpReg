@@ -38,4 +38,17 @@ test_that(".convert_cp_idx for a different case", {
   expect_true(all(bool_vec))
 })
 
+test_that(".convert_cp_idx works for a hard case", {
+  # because the last sample is ommited, there is some gray region
+  fold_id <- c(rep(1:5, each = 25), c(1:4))
+  fold <- 4
+  partition <- c(0, 42, 103)
+
+  res <- .convert_cp_idx(partition, fold_id, fold)
+
+  expect_true(length(fold_id) == res[3])
+})
+
+
+
 

@@ -122,12 +122,25 @@ tuning_cross_validation <- function(method, X, y, K_range = c(1:5),
   stats::median(c(res_away, res_close))
 }
 
+#' Conversion of the changepoint indices
+#'
+#' Converts the changepoint indices on a downsampled model into the
+#' changepoint indicies of the full model
+#'
+#' @param partition partition vector of the downsampled model
+#' @param fold_id vector of which samples are in which folds
+#' @param fold which fold was omitted
+#'
+#' @return
 .convert_cp_idx <- function(partition, fold_id, fold){
   stopifnot(length(fold_id) >= max(partition))
   tmp <- rep(NA, length(fold_id))
   tmp[which(fold_id != fold)] <- 1:length(fold_id[fold_id != fold])
 
-  c(0, sapply(2:length(partition), function(x){
+  res <- c(0, sapply(2:length(partition), function(x){
     which(tmp == partition[x])
   }))
+
+  res[length(res)] <- length(fold_id) # hard cast
+  res
 }
