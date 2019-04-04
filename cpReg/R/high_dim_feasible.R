@@ -43,55 +43,6 @@ high_dim_feasible_estimate <- function(X, y, lambda, K = NA, tau = NA,
   list(partition = partition, coef_list = .refit_high_dim(X, y, lambda, partition/n))
 }
 
-#' Tune lambda (oracle)
-#'
-#' @param X \code{n} by \code{d} matrix
-#' @param y length \code{n} vector
-#' @param partition vector with values between 0 and 1
-#'
-#' @return numeric
-#' @export
-oracle_tune_lambda <- function(X, y, partition){
-  stopifnot(partition[1] == 0, partition[length(partition)] == 1)
-
-  n <- nrow(X)
-  k <- length(partition)-1
-  partition_idx <- round(partition*n)
-
-  stats::median(sapply(1:k, function(x){
-    fit <- glmnet::cv.glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
-                      y[(partition_idx[x]+1):partition_idx[x+1]],
-                      intercept = F, grouped = F)
-    .glmnet_to_cp(fit$lambda.1se, partition_idx[x+1]-partition_idx[x])
-  }))
-}
-
-#' Tune tau (oracle)
-#'
-#' @param X \code{n} by \code{d} matrix
-#' @param y length \code{n} vector
-#' @param lambda numeric
-#' @param partition vector with values between 0 and 1
-#' @param factor numeric
-#'
-#' @return numeric
-#' @export
-oracle_tune_tau <- function(X, y, lambda, partition, factor = 3/4){
-  coef_list <- .refit_high_dim(X, y, lambda, partition)
-  n <- nrow(X)
-  partition_idx <- round(partition*n)
-  k <- length(coef_list)
-
-  res <- min(sapply(1:(k-1), function(x){
-    s <- partition_idx[x]
-    b <- partition_idx[x+1]
-    e <- partition_idx[x+2]
-    .l2norm(sqrt((b - s)*(e-b)/(e-s))*(coef_list[[x]] - coef_list[[x+1]]))
-  }))
-
-  res*factor
-}
-
 #########
 
 .compute_regression_cusum <- function(data, start, end, breakpoint, lambda){

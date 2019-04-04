@@ -24,60 +24,6 @@ high_dim_infeasible_estimate <- function(X, y, lambda, maxl2, K,
        obj_val = res_list[[idx]]$obj_val)
 }
 
-#' Tune group lambda (oracle)
-#'
-#' @param X \code{n} by \code{d} matrix
-#' @param y length \code{n} vector
-#' @param partition vector with values between 0 and 1
-#' @param return_refit boolean
-#'
-#' @return numeric
-#' @export
-oracle_tune_grouplambda <- function(X, y, partition, return_refit = F){
-  n <- nrow(X); d <- ncol(X); k <- length(partition)-1
-  partition_idx <- round(partition*n)
-
-  X_new <- .reformat_covariates(X, partition_idx)
-  group_vec <- rep(1:d, times = k)
-
-  fit <- grpreg::cv.grpreg(X_new, y, group = group_vec, penalty = "grLasso",
-                        group.multiplier = rep(1, d))
-
-  if(!return_refit){
-    .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
-  } else {
-    lambda <- .compute_lambda1se(fit$lambda, fit$cve, fit$cvse)
-    fit <- grpreg::grpreg(X_new, y, group = group_vec, penalty = "grLasso",
-                          group.multiplier = rep(1, d))
-    coef_vec <- as.numeric(stats::coef(fit, lambda = lambda)[-1])
-
-    .convert_grouplasso_to_cp(coef_vec, partition_idx, n, d)
-  }
-}
-
-#' Tune screening tau for high dimensional infeasible (oracle)
-#'
-#' @param X \code{n} by \code{d} matrix
-#' @param y length \code{n} vector
-#' @param partition vector with values between 0 and 1
-#' @param factor numeric
-#'
-#' @return numeric
-#' @export
-oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
-  stopifnot(all(partition >= 0))
-
-  n <- nrow(X)
-  mat <- oracle_tune_grouplambda(X, y, partition, return_refit = T)
-
-  partition_idx <- round(partition*n)
-  vec <- sapply(2:(length(partition_idx)-1), function(x){
-    .compute_cusum(mat, partition_idx[x-1], partition_idx[x+1], partition_idx[x])
-  })
-
-  min(vec)*factor
-}
-
 ##################
 
 .enumerate_possibilites <- function(n, K, delta = 10){
@@ -161,11 +107,3 @@ oracle_tune_group_screeningtau <- function(X, y, partition, factor = 1/4){
 
   X_new
 }
-
-.compute_lambda1se <- function(lambda, cv_error, cv_sd){
-  idx <- which.min(cv_error)
-  max_error <- cv_error[idx] + cv_sd[idx]
-  max(lambda[cv_error < max_error])
-}
-
-

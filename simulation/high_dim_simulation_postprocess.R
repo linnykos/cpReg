@@ -1,5 +1,8 @@
 rm(list=ls())
+load("../results/high_dim_simulation_block.RData")
+res_block <- res
 load("../results/high_dim_simulation.RData")
+res[11:20] <- res_block[1:10]
 
 num_methods_beta <- 5
 max_idx <- 10
@@ -38,7 +41,7 @@ for(i in 1:num_methods_beta){
 }
 
 plot(NA, xlim = range(paramMat[1:max_idx,"n"]), ylim = range(unlist(beta_mat_list)),
-     main = "Sum of Beta L2 squared difference\n(Toeplitz covariance)",
+     main = "Sum of Beta L2 squared difference\n(Block covariance)",
      xlab = "n", ylab = "Error")
 for(i in 1:num_methods_beta){
   points(paramMat[1:max_idx,"n"], beta_mat_list[[2]][1:max_idx,i], col = col_vec[i],
@@ -135,7 +138,7 @@ graphics.off()
 
 
 # make the plot
-png("../figure/high_dimension_Toeplitz.png",
+png("../figure/high_dimension_block.png",
     height = 1200, width = 2000, res = 300, units = "px")
 column_idx <- c(1:5)
 par(mfrow = c(1,2), mar = c(4,4,4,0.5))
@@ -173,39 +176,33 @@ graphics.off()
 
 ##############
 
-# remember that glmnet solves the version with 1/n, so we need to scale up
 param_list <- vector("list", 20)
 for(i in 1:length(res)){
   idx <- which(sapply(res[[i]], length) > 1)
 
   tmp <- res[[i]][idx]
 
-  param_list[[i]] <- sapply(tmp, function(x){unlist(x$parameters)})
+  param_list[[i]] <- sapply(tmp, function(x){unlist(x$parameters[c(1,2,4,5,6)])})
 }
 
 #format in matrices
 param_mat_list <- vector("list", 2)
 for(i in 1:2){
-  mat <- matrix(0, nrow = 10, ncol = 6)
+  mat <- matrix(0, nrow = 10, ncol = 5)
   for(j in 1:10){
     mat[j,] <- apply(param_list[[(i-1)*10+j]], 1, median)
   }
   param_mat_list[[i]] <- mat
 }
 
-for(i in 1:2){
-  for(j in c(1,4)){
-    param_mat_list[[i]][,j] <- param_mat_list[[i]][,j]*paramMat[1:10,"n"]
-  }
-}
 
 png("../figure/high_dimension_parameters.png",
     height = 1500, width = 2500, res = 300, units = "px")
 par(mfrow = c(2,3))
 main_vec <- c("Lambda\n(All)", "Tau\n(Feasible)",
-              "Gamma\n(Buhlmann)", "Lambda\n(Infeasible)", "Tau\n(Screening Buhlmann)",
-              "Tau\n(Screening Infeasible)")
-for(i in 1:6){
+              "Gamma\n(Buhlmann)", "Lambda\n(Infeasible)",
+              "Tau\n(Screening GLL1)")
+for(i in 1:5){
   plot(paramMat[1:max_idx,"n"], param_mat_list[[1]][1:max_idx,i],
        pch = 16, cex = 1.5,
        xlab = "n", ylab = "Value", main = main_vec[i])
