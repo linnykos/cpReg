@@ -15,12 +15,13 @@ oracle_tune_lambda <- function(X, y, partition, lambda.min = F){
   partition_idx <- round(partition*n)
 
   stats::median(sapply(1:k, function(x){
+    if(partition_idx[x+1] - (partition_idx[x]+1) < 10) return(NA)
     fit <- glmnet::cv.glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
                              y[(partition_idx[x]+1):partition_idx[x+1]],
                              intercept = F, grouped = F)
     val <- ifelse(lambda.min, fit$lambda.min, fit$lambda.1se)
      .glmnet_to_cp(val, partition_idx[x+1]-partition_idx[x])
-  }))
+  }), na.rm = T)
 }
 
 #' Tune tau (oracle)

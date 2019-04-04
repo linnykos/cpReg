@@ -1,76 +1,95 @@
-rm(list=ls())
-library(simulation)
-library(cpReg)
-source("../simulation/SGL_solver.R")
-
-paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))),
-                                  c(1), 1/2))
-colnames(paramMat) <- c("n", "X_type", "d/n")
-
-X_type_vec <- c("identity", "toeplitz", "equicorrelation", "block")
-true_partition <- c(0,0.3,0.7,1)
-
-#############
-
-create_coef <- function(vec, full = F){
-  d <- 50 # d <- vec["d/n"]*vec["n"]
-  beta1 <- c(rep(1, 10), rep(0, d-10))
-  beta2 <- c(rep(0, d-10), rep(1, 10))
-  lis <- list(beta1 = beta1, beta2 = beta2)
-
-  if(!full){
-    lis
-  } else {
-    mat <- matrix(0, nrow = vec["n"], ncol = d)
-    idx <- round(true_partition*vec["n"])
-    for(i in 1:(length(idx)-1)){
-      zz <- i %% 2; if(zz == 0) zz <- 2
-      mat[(idx[i]+1):idx[i+1],] <- rep(lis[[zz]], each = idx[i+1]-idx[i])
-    }
-    mat
-  }
-}
-
-rule <- function(vec){
-  lis <- create_coef(vec, full = F)
-
-  cpReg::create_data(list(lis$beta1, lis$beta2, lis$beta1), round(true_partition*vec["n"]),
-                     cov_type = X_type_vec[vec["X_type"]])
-}
-
-set.seed(1)
-vec = paramMat[10,]
+y = 1
+set.seed(y)
+vec = paramMat[1,]
 dat = rule(vec)
 
-##################
+true_beta <- create_coef(vec, full = T)
 
-set.seed(1)
-paramMat <- .tuning_lambda_K_pairing(method = high_dim_buhlmann_estimate,
-                                     dat, cv_verbose = T)
+n <- nrow(dat$X); p <- ncol(dat$X)
 
-# lambda = paramMat[2,1]
-# K = paramMat[2,2]
-# nfolds = 5
-# method = high_dim_buhlmann_estimate
+delta <- max(round(n/20), 5)
+
+# parameter for feasible (and others)
+set.seed(10)
+# feasible_paramMat <- cpReg::tuning_cross_validation(cpReg::high_dim_feasible_estimate, X = dat$X,
+#                                                     y = dat$y, K_range = c(1:5), delta = delta,
+#                                                     max_iter = 10, cv_verbose = T)
+
+##########
+
+method = cpReg::high_dim_feasible_estimate
+K_range = c(1:5)
+cv_verbose = T
+max_iter = 10
+set.seed(10)
+# paramMat <- cpReg:::.tuning_lambda_K_pairing(method, dat, K_range = K_range,
+#                                      cv_verbose = cv_verbose, max_iter = max_iter,
+#                                      delta = delta)
+
+#################
+set.seed(10)
+n <- nrow(dat$X)
+
+# first fit the entire dataset via lasso
+fit <- glmnet::cv.glmnet(dat$X, dat$y, intercept = F, grouped = F)
+new_lambda_vec <- rep(cpReg:::.glmnet_to_cp(fit$lambda.min, n), length(K_range))
+lambda_vec <- rep(Inf, length(K_range))
+iter <- 1
+
+# iterate between lambda and finding partition
+# while(iter < max_iter & sum(abs(new_lambda_vec - lambda_vec)) > 1e-3){
+#   if(cv_verbose) print(paste0("Lambda values: ",
+#                               paste0(round(new_lambda_vec, 2), collapse = ", ")))
 #
-# n <- nrow(dat$X)
-# margin <- ceiling(n/nfolds)
-# fold_id <- rep(1:nfolds, times = margin)[1:n]
+#   lambda_vec <- new_lambda_vec
 #
-# res_list <- lapply(1:nfolds, function(i){
-#   idx <- which(fold_id != i)
-#   method(dat$X[idx,,drop = F], dat$y[idx], K = K, lambda = lambda)
-# })
+#   # try fitting the method now for different values of K
+#   res_list <- lapply(1:length(K_range), function(i){
+#     method(dat$X, dat$y, K= K_range[i], lambda = lambda_vec[i], delta = delta)
+#   })
 #
-# .out_of_sample_prediction(dat, fold_id, fold = 1, res_list[[1]])
+#   # based on the estimated partitions, refit lambda
+#   new_lambda_vec <- sapply(1:length(res_list), function(i){
+#     cpReg::oracle_tune_lambda(dat$X, dat$y, res_list[[i]]$partition/n, lambda.min = T)
+#   })
 #
+#   iter <- iter + 1
+# }
 
-# .cross_validate(method = high_dim_buhlmann_estimate, dat, K = paramMat[2,2],
-#                 lambda = paramMat[2,1])
+###############
 
+lambda_vec <- new_lambda_vec
 
-cv_val <- sapply(1:nrow(paramMat), function(x){
-  if(cv_verbose) print(paste0("On K=", paramMat[x,2]))
-  .cross_validate(method = high_dim_buhlmann_estimate, dat, K = paramMat[x,2],
-                  lambda = paramMat[x,1], cv_verbose = T)
+# try fitting the method now for different values of K
+res_list <- lapply(1:length(K_range), function(i){
+  print(i)
+  method(dat$X, dat$y, K= K_range[i], lambda = lambda_vec[i], delta = delta)
 })
+
+new_lambda_vec <- sapply(1:length(res_list), function(i){
+  print(i)
+  cpReg::oracle_tune_lambda(dat$X, dat$y, res_list[[i]]$partition/n, lambda.min = T)
+})
+
+cpReg::oracle_tune_lambda(dat$X, dat$y, res_list[[4]]$partition/n, lambda.min = T)
+
+##########
+partition <- res_list[[4]]$partition/n
+stopifnot(partition[1] == 0, partition[length(partition)] == 1)
+
+X <- dat$X
+y <- dat$y
+n <- nrow(X)
+lambda.min = T
+k <- length(partition)-1
+partition_idx <- round(partition*n)
+
+stats::median(sapply(1:k, function(x){
+  print(x)
+  #if(partition_idx[x+1] - (partition_idx[x]+1) < 10) return(NA)
+  fit <- glmnet::cv.glmnet(X[(partition_idx[x]+1):partition_idx[x+1],,drop = F],
+                           y[(partition_idx[x]+1):partition_idx[x+1]],
+                           intercept = F, grouped = F)
+  val <- ifelse(lambda.min, fit$lambda.min, fit$lambda.1se)
+  cpReg:::.glmnet_to_cp(val, partition_idx[x+1]-partition_idx[x])
+}), na.rm = T)
