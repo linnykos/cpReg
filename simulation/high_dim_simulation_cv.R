@@ -1,7 +1,6 @@
 rm(list=ls())
 library(simulation)
 library(cpReg)
-source("../simulation/SGL_solver.R")
 
 paramMat <- as.matrix(expand.grid(round(exp(seq(log(100), log(1000), length.out = 10))), c(4),
                                   1/2))
@@ -82,6 +81,7 @@ criterion <- function(dat, vec, y){
 }
 
 # set.seed(1); criterion(rule(paramMat[1,]), paramMat[1,], 1)
+# set.seed(1); criterion(rule(paramMat[2,]), paramMat[2,], 1)
 # set.seed(1); criterion(rule(paramMat[10,]), paramMat[10,], 1)
 
 ###########################
