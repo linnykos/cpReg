@@ -14,8 +14,8 @@ tuning_cross_validation <- function(method, X, y, K_range = c(1:5),
                                     cv_verbose = F, max_iter = 5,
                                     ...){
   dat <- list(X = X, y = y)
-  paramMat <- .tuning_lambda_K_pairing(method, dat, K_range = c(1:5),
-                                       cv_verbose = F, max_iter = 5,
+  paramMat <- .tuning_lambda_K_pairing(method, dat, K_range = K_range,
+                                       cv_verbose = cv_verbose, max_iter = max_iter,
                                        ...)
 
   cv_val <- sapply(1:nrow(paramMat), function(x){
